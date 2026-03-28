@@ -1,0 +1,37 @@
+# ─── Environment / Secrets ────────────────────────────────────────────────────
+.env
+.env.local
+.env.production
+*.env
+
+# ─── Flutter / Dart ───────────────────────────────────────────────────────────
+**/build/
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/pubspec.lock
+!mo_lucro_backend/pubspec.lock
+**/generated_plugin_registrant.*
+**/*.g.dart
+**/*.freezed.dart
+**/.packages
+
+# ─── Dart Frog ────────────────────────────────────────────────────────────────
+mo_lucro_backend/.dart_frog/
+
+# ─── IDEs ─────────────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# ─── OS ───────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ─── Logs & temp ──────────────────────────────────────────────────────────────
+*.log
+*.tmp
+build_errors.txt
