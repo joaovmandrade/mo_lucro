@@ -41,8 +41,9 @@ class InvestmentNotifier extends StateNotifier<InvestmentState> {
   Future<void> loadInvestments({String? type, int page = 1}) async {
     state = state.copyWith(isLoading: true, error: null, selectedType: type);
     try {
+      await _dataSource.refreshMarketPrices();
       final result = await _dataSource.getInvestments(type: type, page: page);
-      final items = (result['investments'] as List?)
+      final items = (result['items'] as List?)
           ?.map((e) => e as Map<String, dynamic>).toList() ?? [];
       state = state.copyWith(
         isLoading: false,

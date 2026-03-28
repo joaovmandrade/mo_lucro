@@ -218,6 +218,12 @@
       "languageVersion": "3.0"
     },
     {
+      "name": "http",
+      "rootUri": "file:///C:/Users/joaov/AppData/Local/Pub/Cache/hosted/pub.dev/http-1.6.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
+    },
+    {
       "name": "http_methods",
       "rootUri": "file:///C:/Users/joaov/AppData/Local/Pub/Cache/hosted/pub.dev/http_methods-1.1.1",
       "packageUri": "lib/",

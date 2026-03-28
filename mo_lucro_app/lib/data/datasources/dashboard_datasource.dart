@@ -1,12 +1,37 @@
-import 'package:dio/dio.dart';
-import '../../core/network/api_client.dart';
+import 'dart:async';
 
-/// Remote data source for dashboard API.
+/// Mock offline data source for dashboard API.
 class DashboardDataSource {
-  final Dio _dio = ApiClient.instance;
-
   Future<Map<String, dynamic>> getDashboard() async {
-    final response = await _dio.get(ApiEndpoints.dashboard);
-    return response.data['data'] as Map<String, dynamic>;
+    await Future.delayed(const Duration(seconds: 1));
+    return {
+      'totalBalance': 15420.50,
+      'monthlyIncome': 5000.00,
+      'monthlyExpense': 3240.10,
+      'recentTransactions': [
+        {
+          'id': '1',
+          'title': 'Mercado Livre',
+          'amount': -150.00,
+          'date': DateTime.now().toIso8601String(),
+          'type': 'EXPENSE',
+        },
+         {
+          'id': '2',
+          'title': 'Salário',
+          'amount': 5000.00,
+          'date': DateTime.now().subtract(const Duration(days: 2)).toIso8601String(),
+          'type': 'INCOME',
+        },
+      ],
+      'goalsProgress': [
+        {
+          'id': 'g1',
+          'title': 'Comprar Carro',
+          'targetAmount': 50000.00,
+          'currentAmount': 10000.00,
+        }
+      ]
+    };
   }
 }

@@ -147,13 +147,13 @@ class _MaturityCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
         border: isUrgent
             ? Border.all(color: AppColors.error.withOpacity(0.5), width: 1.5)
             : isSoon
                 ? Border.all(color: AppColors.warning.withOpacity(0.3))
-                : null,
+                : Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

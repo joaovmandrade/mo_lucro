@@ -59,6 +59,7 @@ class InvestmentRepository {
     required String userId,
     required String name,
     required String type,
+    String? symbol,
     required double initialAmount,
     required DateTime investmentDate,
     DateTime? maturityDate,
@@ -71,11 +72,11 @@ class InvestmentRepository {
     final result = await Database.query(
       '''
       INSERT INTO investments (
-        user_id, name, type, initial_amount, current_amount,
+        user_id, name, type, symbol, initial_amount, current_amount,
         investment_date, maturity_date, contracted_rate, indexer,
         institution, liquidity, notes
       ) VALUES (
-        @userId::uuid, @name, @type::investment_type, @initialAmount, @initialAmount,
+        @userId::uuid, @name, @type::investment_type, @symbol, @initialAmount, @initialAmount,
         @investmentDate, @maturityDate, @contractedRate, @indexer::indexer_type,
         @institution, @liquidity::liquidity_type, @notes
       ) RETURNING *
@@ -84,6 +85,7 @@ class InvestmentRepository {
         'userId': userId,
         'name': name,
         'type': type,
+        'symbol': symbol,
         'initialAmount': initialAmount,
         'investmentDate': investmentDate.toIso8601String().split('T').first,
         'maturityDate': maturityDate?.toIso8601String().split('T').first,
@@ -105,6 +107,7 @@ class InvestmentRepository {
     final fieldMap = {
       'name': 'name = @name',
       'type': 'type = @type::investment_type',
+      'symbol': 'symbol = @symbol',
       'initialAmount': 'initial_amount = @initialAmount',
       'currentAmount': 'current_amount = @currentAmount',
       'maturityDate': 'maturity_date = @maturityDate',

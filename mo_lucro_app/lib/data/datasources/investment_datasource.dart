@@ -1,44 +1,133 @@
-import 'package:dio/dio.dart';
-import '../../core/network/api_client.dart';
+import 'dart:async';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
-/// Remote data source for investments API.
+/// Mock offline data source for investments API.
 class InvestmentDataSource {
-  final Dio _dio = ApiClient.instance;
+  final List<Map<String, dynamic>> _mockInvestments = [
+    {
+      'id': 'i1',
+      'name': 'Tesouro Selic 2029',
+      'type': 'FIXED_INCOME',
+      'symbol': null,
+      'amountInvested': 5000.00,
+      'currentValue': 5210.30,
+      'yield': 4.2,
+      'startDate': DateTime.now().subtract(const Duration(days: 120)).toIso8601String(),
+    },
+    {
+      'id': 'i2',
+      'name': 'Apple Inc.',
+      'type': 'ACOES',
+      'symbol': 'AAPL',
+      'amountInvested': 150.00,
+      'currentValue': 150.00,
+      'yield': 0.0,
+      'startDate': DateTime.now().subtract(const Duration(days: 10)).toIso8601String(),
+    },
+    {
+      'id': 'i3',
+      'name': 'Bitcoin',
+      'type': 'CRIPTO',
+      'symbol': 'bitcoin',
+      'amountInvested': 60000.00,
+      'currentValue': 60000.00,
+      'yield': 0.0,
+      'startDate': DateTime.now().subtract(const Duration(days: 60)).toIso8601String(),
+    }
+  ];
+
+  final String _baseUrl = 'http://localhost:8080/api/v1';
+
+  Future<void> refreshMarketPrices() async {
+    for (var inv in _mockInvestments) {
+      if (inv['symbol'] != null && inv['symbol'].toString().isNotEmpty) {
+        try {
+          if (inv['type'] == 'ACOES') {
+            final res = await http.get(Uri.parse('$_baseUrl/market/stock/${inv['symbol']}'));
+            if (res.statusCode == 200) {
+              final data = jsonDecode(res.body);
+              final price = data['price'] as num?;
+              if (price != null) {
+                inv['currentValue'] = price.toDouble();
+              }
+            }
+          } else if (inv['type'] == 'CRIPTO') {
+            final res = await http.get(Uri.parse('$_baseUrl/market/crypto/${inv['symbol']}'));
+            if (res.statusCode == 200) {
+              final data = jsonDecode(res.body);
+              final price = data['brl'] as num? ?? data['usd'] as num?; 
+              if (price != null) {
+                inv['currentValue'] = price.toDouble();
+              }
+            }
+          }
+        } catch (_) {
+          // Fallback if backend is unavailable
+        }
+      }
+    }
+  }
 
   Future<Map<String, dynamic>> getInvestments({
     String? type,
     int page = 1,
     int limit = 20,
   }) async {
-    final response = await _dio.get(ApiEndpoints.investments, queryParameters: {
+    await Future.delayed(const Duration(seconds: 1));
+    return {
+      'items': _mockInvestments,
+      'total': _mockInvestments.length,
       'page': page,
-      'limit': limit,
-      if (type != null) 'type': type,
-    });
-    return response.data['data'] as Map<String, dynamic>;
+      'totalPages': 1,
+    };
   }
 
   Future<Map<String, dynamic>> getInvestmentDetails(String id) async {
-    final response = await _dio.get(ApiEndpoints.investmentById(id));
-    return response.data['data'] as Map<String, dynamic>;
+    await Future.delayed(const Duration(seconds: 1));
+    return _mockInvestments.firstWhere((i) => i['id'] == id, orElse: () => throw Exception('Investment not found'));
   }
 
   Future<Map<String, dynamic>> createInvestment(Map<String, dynamic> data) async {
-    final response = await _dio.post(ApiEndpoints.investments, data: data);
-    return response.data['data'] as Map<String, dynamic>;
+    await Future.delayed(const Duration(seconds: 1));
+    final newInv = {
+      ...data,
+      'id': 'mock_${DateTime.now().millisecondsSinceEpoch}',
+      'currentValue': data['amountInvested'] ?? 0.0,
+      'yield': 0.0,
+    };
+    _mockInvestments.add(newInv);
+    return newInv;
   }
 
   Future<Map<String, dynamic>> updateInvestment(String id, Map<String, dynamic> data) async {
-    final response = await _dio.put(ApiEndpoints.investmentById(id), data: data);
-    return response.data['data'] as Map<String, dynamic>;
+    await Future.delayed(const Duration(seconds: 1));
+    final index = _mockInvestments.indexWhere((i) => i['id'] == id);
+    if (index != -1) {
+      _mockInvestments[index] = { ..._mockInvestments[index], ...data };
+      return _mockInvestments[index];
+    }
+    throw Exception('Investment not found');
   }
 
   Future<void> deleteInvestment(String id) async {
-    await _dio.delete(ApiEndpoints.investmentById(id));
+    await Future.delayed(const Duration(seconds: 1));
+    _mockInvestments.removeWhere((i) => i['id'] == id);
   }
 
   Future<Map<String, dynamic>> addContribution(Map<String, dynamic> data) async {
-    final response = await _dio.post(ApiEndpoints.contributions, data: data);
-    return response.data['data'] as Map<String, dynamic>;
+    await Future.delayed(const Duration(seconds: 1));
+    final id = data['investmentId'];
+    final index = _mockInvestments.indexWhere((i) => i['id'] == id);
+    if (index != -1) {
+      final amount = data['amount'] as num? ?? 0.0;
+      final currentInvAmount = _mockInvestments[index]['amountInvested'] as num? ?? 0.0;
+      final currentInvValue = _mockInvestments[index]['currentValue'] as num? ?? 0.0;
+      
+      _mockInvestments[index]['amountInvested'] = currentInvAmount + amount;
+      _mockInvestments[index]['currentValue'] = currentInvValue + amount;
+      return _mockInvestments[index];
+    }
+    throw Exception('Investment not found');
   }
 }

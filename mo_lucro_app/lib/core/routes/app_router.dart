@@ -17,6 +17,7 @@ import '../../features/reports/presentation/pages/risk_analysis_page.dart';
 import '../../features/profile/presentation/pages/profile_quiz_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/reports/presentation/pages/maturity_calendar_page.dart';
+import '../../features/news/presentation/pages/news_page.dart';
 import '../shell/main_shell.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -96,6 +97,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/profile/quiz',
         builder: (context, state) => const ProfileQuizPage(),
+      ),
+      GoRoute(
+        path: '/news',
+        builder: (context, state) => const NewsPage(),
       ),
     ],
   );

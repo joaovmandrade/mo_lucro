@@ -4,6 +4,7 @@ class Investment {
   final String userId;
   final String name;
   final String type;
+  final String? symbol;
   final double initialAmount;
   final double currentAmount;
   final DateTime investmentDate;
@@ -22,6 +23,7 @@ class Investment {
     required this.userId,
     required this.name,
     required this.type,
+    this.symbol,
     required this.initialAmount,
     required this.currentAmount,
     required this.investmentDate,
@@ -42,6 +44,7 @@ class Investment {
       userId: row['user_id'] as String,
       name: row['name'] as String,
       type: row['type'] as String,
+      symbol: row['symbol'] as String?,
       initialAmount: _toDouble(row['initial_amount']),
       currentAmount: _toDouble(row['current_amount']),
       investmentDate: DateTime.parse(row['investment_date'].toString()),
@@ -67,6 +70,7 @@ class Investment {
       'userId': userId,
       'name': name,
       'type': type,
+      'symbol': symbol,
       'initialAmount': initialAmount,
       'currentAmount': currentAmount,
       'investmentDate': investmentDate.toIso8601String(),

@@ -13,6 +13,9 @@ import '../routes/api/v1/reports/diversification.dart' as api_v1_reports_diversi
 import '../routes/api/v1/profile/result.dart' as api_v1_profile_result;
 import '../routes/api/v1/profile/recommendations.dart' as api_v1_profile_recommendations;
 import '../routes/api/v1/profile/quiz.dart' as api_v1_profile_quiz;
+import '../routes/api/v1/market/stock/[symbol].dart' as api_v1_market_stock_$symbol;
+import '../routes/api/v1/market/history/[symbol].dart' as api_v1_market_history_$symbol;
+import '../routes/api/v1/market/crypto/[id].dart' as api_v1_market_crypto_$id;
 import '../routes/api/v1/investments/index.dart' as api_v1_investments_index;
 import '../routes/api/v1/investments/[id].dart' as api_v1_investments_$id;
 import '../routes/api/v1/goals/index.dart' as api_v1_goals_index;
@@ -20,6 +23,7 @@ import '../routes/api/v1/goals/[id].dart' as api_v1_goals_$id;
 import '../routes/api/v1/expenses/summary.dart' as api_v1_expenses_summary;
 import '../routes/api/v1/expenses/index.dart' as api_v1_expenses_index;
 import '../routes/api/v1/expenses/[id].dart' as api_v1_expenses_$id;
+import '../routes/api/v1/economy/selic.dart' as api_v1_economy_selic;
 import '../routes/api/v1/dashboard/index.dart' as api_v1_dashboard_index;
 import '../routes/api/v1/contributions/index.dart' as api_v1_contributions_index;
 import '../routes/api/v1/calculators/income_tax.dart' as api_v1_calculators_income_tax;
@@ -29,6 +33,7 @@ import '../routes/api/v1/auth/register.dart' as api_v1_auth_register;
 import '../routes/api/v1/auth/refresh.dart' as api_v1_auth_refresh;
 import '../routes/api/v1/auth/logout.dart' as api_v1_auth_logout;
 import '../routes/api/v1/auth/login.dart' as api_v1_auth_login;
+import '../routes/api/v1/ai/categorize.dart' as api_v1_ai_categorize;
 
 import '../routes/_middleware.dart' as middleware;
 import '../routes/api/v1/_middleware.dart' as api_v1_middleware;
@@ -50,13 +55,18 @@ Handler buildRootHandler() {
     ..mount('/', (context) => buildHandler()(context))
     ..mount('/api/v1/reports', (context) => buildApiV1ReportsHandler()(context))
     ..mount('/api/v1/profile', (context) => buildApiV1ProfileHandler()(context))
+    ..mount('/api/v1/market/stock', (context) => buildApiV1MarketStockHandler()(context))
+    ..mount('/api/v1/market/history', (context) => buildApiV1MarketHistoryHandler()(context))
+    ..mount('/api/v1/market/crypto', (context) => buildApiV1MarketCryptoHandler()(context))
     ..mount('/api/v1/investments', (context) => buildApiV1InvestmentsHandler()(context))
     ..mount('/api/v1/goals', (context) => buildApiV1GoalsHandler()(context))
     ..mount('/api/v1/expenses', (context) => buildApiV1ExpensesHandler()(context))
+    ..mount('/api/v1/economy', (context) => buildApiV1EconomyHandler()(context))
     ..mount('/api/v1/dashboard', (context) => buildApiV1DashboardHandler()(context))
     ..mount('/api/v1/contributions', (context) => buildApiV1ContributionsHandler()(context))
     ..mount('/api/v1/calculators', (context) => buildApiV1CalculatorsHandler()(context))
-    ..mount('/api/v1/auth', (context) => buildApiV1AuthHandler()(context));
+    ..mount('/api/v1/auth', (context) => buildApiV1AuthHandler()(context))
+    ..mount('/api/v1/ai', (context) => buildApiV1AiHandler()(context));
   return pipeline.addHandler(router);
 }
 
@@ -81,6 +91,27 @@ Handler buildApiV1ProfileHandler() {
   return pipeline.addHandler(router);
 }
 
+Handler buildApiV1MarketStockHandler() {
+  final pipeline = const Pipeline().addMiddleware(api_v1_middleware.middleware);
+  final router = Router()
+    ..all('/<symbol>', (context,symbol,) => api_v1_market_stock_$symbol.onRequest(context,symbol,));
+  return pipeline.addHandler(router);
+}
+
+Handler buildApiV1MarketHistoryHandler() {
+  final pipeline = const Pipeline().addMiddleware(api_v1_middleware.middleware);
+  final router = Router()
+    ..all('/<symbol>', (context,symbol,) => api_v1_market_history_$symbol.onRequest(context,symbol,));
+  return pipeline.addHandler(router);
+}
+
+Handler buildApiV1MarketCryptoHandler() {
+  final pipeline = const Pipeline().addMiddleware(api_v1_middleware.middleware);
+  final router = Router()
+    ..all('/<id>', (context,id,) => api_v1_market_crypto_$id.onRequest(context,id,));
+  return pipeline.addHandler(router);
+}
+
 Handler buildApiV1InvestmentsHandler() {
   final pipeline = const Pipeline().addMiddleware(api_v1_middleware.middleware);
   final router = Router()
@@ -99,6 +130,13 @@ Handler buildApiV1ExpensesHandler() {
   final pipeline = const Pipeline().addMiddleware(api_v1_middleware.middleware);
   final router = Router()
     ..all('/summary', (context) => api_v1_expenses_summary.onRequest(context,))..all('/<id>', (context,id,) => api_v1_expenses_$id.onRequest(context,id,))..all('/', (context) => api_v1_expenses_index.onRequest(context,));
+  return pipeline.addHandler(router);
+}
+
+Handler buildApiV1EconomyHandler() {
+  final pipeline = const Pipeline().addMiddleware(api_v1_middleware.middleware);
+  final router = Router()
+    ..all('/selic', (context) => api_v1_economy_selic.onRequest(context,));
   return pipeline.addHandler(router);
 }
 
@@ -127,6 +165,13 @@ Handler buildApiV1AuthHandler() {
   final pipeline = const Pipeline().addMiddleware(api_v1_middleware.middleware);
   final router = Router()
     ..all('/login', (context) => api_v1_auth_login.onRequest(context,))..all('/logout', (context) => api_v1_auth_logout.onRequest(context,))..all('/refresh', (context) => api_v1_auth_refresh.onRequest(context,))..all('/register', (context) => api_v1_auth_register.onRequest(context,));
+  return pipeline.addHandler(router);
+}
+
+Handler buildApiV1AiHandler() {
+  final pipeline = const Pipeline().addMiddleware(api_v1_middleware.middleware);
+  final router = Router()
+    ..all('/categorize', (context) => api_v1_ai_categorize.onRequest(context,));
   return pipeline.addHandler(router);
 }
 

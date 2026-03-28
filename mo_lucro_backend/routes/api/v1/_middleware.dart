@@ -8,10 +8,13 @@ Handler middleware(Handler handler) {
   return (context) async {
     final path = context.request.uri.path;
 
-    // Skip auth for public routes
+    // Skip auth for public routes and market data routes
     if (path.contains('/auth/login') ||
         path.contains('/auth/register') ||
-        path.contains('/auth/refresh')) {
+        path.contains('/auth/refresh') ||
+        path.contains('/market/') ||
+        path.contains('/economy/') ||
+        path.contains('/ai/')) {
       return handler(context);
     }
 

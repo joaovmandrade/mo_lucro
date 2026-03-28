@@ -23,65 +23,69 @@ class GoalsPage extends StatelessWidget {
         itemCount: goals.length,
         itemBuilder: (context, i) {
           final g = goals[i];
+          final isLast = i == goals.length - 1;
           final progress = (g['current'] as double) / (g['target'] as double);
-          return Container(
-            margin: const EdgeInsets.only(bottom: 16),
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: (g['color'] as Color).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(g['icon'] as IconData, color: g['color'] as Color),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: AppColors.border),
+                          ),
+                          child: Icon(g['icon'] as IconData, color: g['color'] as Color, size: 20),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(g['name'] as String,
+                                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: AppColors.textPrimary)),
+                              Text('Prioridade: ${g['priority']}',
+                                  style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                            ],
+                          ),
+                        ),
+                        Text('${(progress * 100).toInt()}%',
+                            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: g['color'] as Color)),
+                      ],
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(g['name'] as String,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                          Text('Prioridade: ${g['priority']}',
-                              style: const TextStyle(fontSize: 12, color: AppColors.textTertiary)),
-                        ],
+                    const SizedBox(height: 16),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: progress,
+                        minHeight: 6,
+                        backgroundColor: AppColors.highlightSurface,
+                        valueColor: AlwaysStoppedAnimation(g['color'] as Color),
                       ),
                     ),
-                    Text('${(progress * 100).toInt()}%',
-                        style: TextStyle(fontWeight: FontWeight.bold, color: g['color'] as Color)),
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('R\$ ${(g['current'] as double).toStringAsFixed(0)}',
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                        Text('R\$ ${(g['target'] as double).toStringAsFixed(0)}',
+                            style: const TextStyle(fontSize: 14, color: AppColors.textSecondary)),
+                      ],
+                    ),
                   ],
                 ),
-                const SizedBox(height: 16),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: LinearProgressIndicator(
-                    value: progress,
-                    minHeight: 8,
-                    backgroundColor: (g['color'] as Color).withOpacity(0.1),
-                    valueColor: AlwaysStoppedAnimation(g['color'] as Color),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('R\$ ${(g['current'] as double).toStringAsFixed(0)}',
-                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                    Text('R\$ ${(g['target'] as double).toStringAsFixed(0)}',
-                        style: const TextStyle(fontSize: 13, color: AppColors.textTertiary)),
-                  ],
-                ),
-              ],
-            ),
+              ),
+              if (!isLast)
+                const Divider(height: 1),
+            ],
           );
         },
       ),

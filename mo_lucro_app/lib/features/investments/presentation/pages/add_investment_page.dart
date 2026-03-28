@@ -1,20 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../providers/investment_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../shared/widgets/shared_widgets.dart';
 
 /// Add/Create investment form page.
-class AddInvestmentPage extends StatefulWidget {
+class AddInvestmentPage extends ConsumerStatefulWidget {
   const AddInvestmentPage({super.key});
 
   @override
-  State<AddInvestmentPage> createState() => _AddInvestmentPageState();
+  ConsumerState<AddInvestmentPage> createState() => _AddInvestmentPageState();
 }
 
-class _AddInvestmentPageState extends State<AddInvestmentPage> {
+class _AddInvestmentPageState extends ConsumerState<AddInvestmentPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
+  final _symbolController = TextEditingController();
   final _amountController = TextEditingController();
   final _rateController = TextEditingController();
   final _institutionController = TextEditingController();
@@ -45,7 +48,7 @@ class _AddInvestmentPageState extends State<AddInvestmentPage> {
             // Type selector
             const Text('Tipo de Ativo', style: TextStyle(
               fontWeight: FontWeight.w500, color: AppColors.textSecondary)),
-            const SizedBox(height: 8),
+            const SizedBox(height: 16),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -56,10 +59,14 @@ class _AddInvestmentPageState extends State<AddInvestmentPage> {
                   selected: isSelected,
                   onSelected: (_) =>
                       setState(() => _selectedType = type['value'] as String),
-                  selectedColor: AppColors.primary.withOpacity(0.2),
+                  selectedColor: AppColors.primary,
+                  backgroundColor: AppColors.surface,
+                  side: BorderSide(
+                    color: isSelected ? AppColors.primary : AppColors.border,
+                  ),
                   labelStyle: TextStyle(
-                    color: isSelected ? AppColors.primary : AppColors.textSecondary,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                    color: isSelected ? Colors.white : AppColors.textSecondary,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                   ),
                 );
               }).toList(),
@@ -73,6 +80,15 @@ class _AddInvestmentPageState extends State<AddInvestmentPage> {
               validator: (v) => v?.isEmpty == true ? 'Obrigatório' : null,
             ),
             const SizedBox(height: 16),
+
+            if (_selectedType == 'ACOES' || _selectedType == 'CRIPTO') ...[
+              AppTextField(
+                label: 'Símbolo / Ticker',
+                hint: 'Ex: AAPL, BTC, PETR4',
+                controller: _symbolController,
+              ),
+              const SizedBox(height: 16),
+            ],
 
             AppTextField(
               label: 'Valor Aplicado (R\$)',
@@ -221,10 +237,29 @@ class _AddInvestmentPageState extends State<AddInvestmentPage> {
               text: 'Salvar Investimento',
               isLoading: _isLoading,
               icon: Icons.check_rounded,
-              onPressed: () {
+              onPressed: () async {
                 if (_formKey.currentState!.validate()) {
-                  // TODO: Save via API
-                  context.pop();
+                  setState(() => _isLoading = true);
+                  final data = {
+                    'name': _nameController.text,
+                    'type': _selectedType,
+                    'symbol': _symbolController.text.isNotEmpty ? _symbolController.text : null,
+                    'amountInvested': double.tryParse(_amountController.text.replaceAll(',', '.')) ?? 0.0,
+                    'indexer': _selectedIndexer,
+                    'rate': _rateController.text,
+                    'institution': _institutionController.text,
+                    'liquidity': _selectedLiquidity,
+                    'notes': _notesController.text,
+                    'startDate': _investmentDate.toIso8601String(),
+                    'maturityDate': _maturityDate?.toIso8601String(),
+                  };
+                  final success = await ref.read(investmentProvider.notifier).createInvestment(data);
+                  setState(() => _isLoading = false);
+                  if (success && mounted) {
+                    context.pop();
+                  } else if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Erro ao salvar')));
+                  }
                 }
               },
             ),

@@ -62,7 +62,7 @@ class _ProfileQuizPageState extends State<ProfileQuizPage> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: selected ? AppColors.primary.withOpacity(0.1) : Colors.white,
+                    color: selected ? AppColors.primary.withOpacity(0.12) : AppColors.surface,
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: selected ? AppColors.primary : AppColors.border, width: selected ? 2 : 1),
                   ),
@@ -115,13 +115,16 @@ class _ProfileQuizPageState extends State<ProfileQuizPage> {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: AppColors.secondary.withOpacity(0.1), shape: BoxShape.circle),
-              child: const Icon(Icons.emoji_events_rounded, size: 64, color: AppColors.secondary),
+                color: AppColors.surface,
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.border),
+              ),
+              child: const Icon(Icons.emoji_events_rounded, size: 64, color: AppColors.primary),
             ),
             const SizedBox(height: 24),
             const Text('Seu Perfil', style: TextStyle(fontSize: 16, color: AppColors.textSecondary)),
             const SizedBox(height: 8),
-            const Text('MODERADO', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: AppColors.secondary)),
+            const Text('MODERADO', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
             const SizedBox(height: 24),
             const Text(
               'Você busca equilíbrio entre segurança e rentabilidade. '

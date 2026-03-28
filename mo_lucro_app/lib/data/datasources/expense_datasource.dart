@@ -1,9 +1,25 @@
-import 'package:dio/dio.dart';
-import '../../core/network/api_client.dart';
+import 'dart:async';
 
-/// Remote data source for expenses API.
+/// Mock offline data source for expenses API.
 class ExpenseDataSource {
-  final Dio _dio = ApiClient.instance;
+  final List<Map<String, dynamic>> _mockExpenses = [
+    {
+      'id': 'e1',
+      'title': 'Alimentação',
+      'amount': 45.50,
+      'date': DateTime.now().toIso8601String(),
+      'category': 'FOOD',
+      'type': 'EXPENSE',
+    },
+    {
+      'id': 'e2',
+      'title': 'Internet',
+      'amount': 120.00,
+      'date': DateTime.now().subtract(const Duration(days: 5)).toIso8601String(),
+      'category': 'UTILS',
+      'type': 'EXPENSE',
+    }
+  ];
 
   Future<Map<String, dynamic>> getExpenses({
     String? type,
@@ -12,34 +28,48 @@ class ExpenseDataSource {
     int page = 1,
     int limit = 20,
   }) async {
-    final response = await _dio.get(ApiEndpoints.expenses, queryParameters: {
-      'page': page, 'limit': limit,
-      if (type != null) 'type': type,
-      if (startDate != null) 'startDate': startDate,
-      if (endDate != null) 'endDate': endDate,
-    });
-    return response.data['data'] as Map<String, dynamic>;
+    await Future.delayed(const Duration(seconds: 1));
+    return {
+      'items': _mockExpenses,
+      'total': _mockExpenses.length,
+      'page': page,
+      'totalPages': 1,
+    };
   }
 
   Future<Map<String, dynamic>> createExpense(Map<String, dynamic> data) async {
-    final response = await _dio.post(ApiEndpoints.expenses, data: data);
-    return response.data['data'] as Map<String, dynamic>;
+    await Future.delayed(const Duration(seconds: 1));
+    final newExpense = {
+      ...data,
+      'id': 'mock_${DateTime.now().millisecondsSinceEpoch}',
+    };
+    _mockExpenses.add(newExpense);
+    return newExpense;
   }
 
   Future<Map<String, dynamic>> updateExpense(String id, Map<String, dynamic> data) async {
-    final response = await _dio.put(ApiEndpoints.expenseById(id), data: data);
-    return response.data['data'] as Map<String, dynamic>;
+    await Future.delayed(const Duration(seconds: 1));
+    final index = _mockExpenses.indexWhere((e) => e['id'] == id);
+    if (index != -1) {
+      _mockExpenses[index] = { ..._mockExpenses[index], ...data };
+      return _mockExpenses[index];
+    }
+    throw Exception('Expense not found');
   }
 
   Future<void> deleteExpense(String id) async {
-    await _dio.delete(ApiEndpoints.expenseById(id));
+    await Future.delayed(const Duration(seconds: 1));
+    _mockExpenses.removeWhere((e) => e['id'] == id);
   }
 
   Future<Map<String, dynamic>> getSummary({int? year, int? month}) async {
-    final response = await _dio.get(ApiEndpoints.expenseSummary, queryParameters: {
-      if (year != null) 'year': year,
-      if (month != null) 'month': month,
-    });
-    return response.data['data'] as Map<String, dynamic>;
+    await Future.delayed(const Duration(seconds: 1));
+    return {
+      'totalAmount': 165.50,
+      'byCategory': {
+        'FOOD': 45.50,
+        'UTILS': 120.00,
+      }
+    };
   }
 }

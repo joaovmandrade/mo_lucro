@@ -1,79 +1,76 @@
 import 'package:flutter/material.dart';
 
-/// Mo Lucro Design System - Color Palette
+/// Mo Lucro Design System - Color Palette (Premium Dark Theme)
 class AppColors {
   AppColors._();
 
-  // Primary colors
-  static const primary = Color(0xFF1E88E5);
-  static const primaryLight = Color(0xFF64B5F6);
-  static const primaryDark = Color(0xFF1565C0);
+  // Background & Surfaces
+  static const background = Color(0xFF0F172A); // Slate 900
+  static const surface = Color(0xFF1E293B); // Slate 800
+  static const inputFill = Color(0xFF0F172A); // Same as bg for clean look
+  static const highlightSurface = Color(0xFF334155); // Slate 700
 
-  // Secondary (accent)
-  static const secondary = Color(0xFF26A69A);
-  static const secondaryLight = Color(0xFF80CBC4);
+  // Brand / Actions
+  static const primary = Color(0xFF3B82F6); // Blue 500
+  static const primaryLight = Color(0xFF60A5FA); // Blue 400
+  static const primaryDark = Color(0xFF2563EB); // Blue 600
 
-  // Semantic colors
-  static const success = Color(0xFF4CAF50);
-  static const error = Color(0xFFEF5350);
-  static const warning = Color(0xFFFFA726);
-  static const info = Color(0xFF42A5F5);
+  // Secondary
+  static const secondary = Color(0xFF94A3B8); // Slate 400 - Restored
+  static const secondaryLight = Color(0xFFCBD5E1);
 
-  // Finance specific
-  static const profit = Color(0xFF00C853);
-  static const loss = Color(0xFFFF1744);
-  static const invested = Color(0xFF7C4DFF);
+  // Semantic
+  static const success = Color(0xFF22C55E); // Green 500 - Profits
+  static const profit = success;
+  static const error = Color(0xFFEF4444); // Red 500 - Losses / Expenses
+  static const danger = error;
+  static const loss = error;
+  static const warning = Color(0xFFF59E0B); // Amber 500
+  static const info = Color(0xFF0EA5E9); // Sky 500
+  static const invested = Color(0xFFA855F7); // Purple 500
 
-  // Backgrounds
-  static const background = Color(0xFFF5F7FA);
-  static const surface = Color(0xFFFFFFFF);
-  static const inputFill = Color(0xFFF0F2F5);
-
-  // Text
-  static const textPrimary = Color(0xFF1A1A2E);
-  static const textSecondary = Color(0xFF4A4A68);
-  static const textTertiary = Color(0xFF9E9EB8);
+  // Typography
+  static const textPrimary = Color(0xFFF1F5F9); // Slate 100
+  static const textSecondary = Color(0xFF94A3B8); // Slate 400
+  static const textTertiary = Color(0xFF64748B); // Slate 500
 
   // Borders & Dividers
-  static const border = Color(0xFFE0E0E0);
-  static const divider = Color(0xFFF0F0F0);
+  static const border = Color(0xFF334155); // Slate 700
+  static const divider = Color(0xFF1E293B); // Slate 800
 
-  // Chart colors
+  // Charts (Minimal colors)
   static const chartColors = [
-    Color(0xFF1E88E5), // Blue
-    Color(0xFF26A69A), // Teal
-    Color(0xFFFFA726), // Orange
-    Color(0xFF7C4DFF), // Purple
-    Color(0xFFEF5350), // Red
-    Color(0xFF66BB6A), // Green
-    Color(0xFFEC407A), // Pink
-    Color(0xFF5C6BC0), // Indigo
-    Color(0xFF8D6E63), // Brown
+    Color(0xFF3B82F6), // Primary Blue
+    Color(0xFF8B5CF6), // Violet 500
+    Color(0xFF10B981), // Emerald 500
+    Color(0xFFF59E0B), // Amber 500
+    Color(0xFF06B6D4), // Cyan 500
+    Color(0xFFEC4899), // Pink 500
   ];
 
-  // Investment type colors
+  // Investment type colors (Muted for dark theme)
   static const investmentColors = {
-    'CDB': Color(0xFF1E88E5),
-    'TESOURO_DIRETO': Color(0xFF26A69A),
-    'POUPANCA': Color(0xFF66BB6A),
-    'ACOES': Color(0xFFEF5350),
-    'FUNDOS_IMOBILIARIOS': Color(0xFF7C4DFF),
-    'FUNDOS': Color(0xFF5C6BC0),
-    'CRIPTO': Color(0xFFFFA726),
-    'CAIXA': Color(0xFF78909C),
-    'OUTROS': Color(0xFF8D6E63),
+    'CDB': Color(0xFF3B82F6),
+    'TESOURO_DIRETO': Color(0xFF10B981),
+    'POUPANCA': Color(0xFF22C55E),
+    'ACOES': Color(0xFF8B5CF6),
+    'FUNDOS_IMOBILIARIOS': Color(0xFFF59E0B),
+    'FUNDOS': Color(0xFF06B6D4),
+    'CRIPTO': Color(0xFFEC4899),
+    'CAIXA': Color(0xFF94A3B8), // Slate 400
+    'OUTROS': Color(0xFF64748B), // Slate 500
   };
 
-  // Category colors
+  // Category Colors
   static const categoryColors = {
-    'alimentação': Color(0xFFFF5722),
-    'transporte': Color(0xFF2196F3),
-    'moradia': Color(0xFF4CAF50),
-    'saúde': Color(0xFFE91E63),
-    'lazer': Color(0xFF9C27B0),
-    'estudos': Color(0xFFFF9800),
-    'contas fixas': Color(0xFF607D8B),
-    'investimentos': Color(0xFF00BCD4),
-    'outros': Color(0xFF795548),
+    'alimentação': Color(0xFFEF4444),
+    'transporte': Color(0xFF3B82F6),
+    'moradia': Color(0xFF10B981),
+    'saúde': Color(0xFFEC4899),
+    'lazer': Color(0xFF8B5CF6),
+    'estudos': Color(0xFFF59E0B),
+    'contas fixas': Color(0xFF06B6D4),
+    'investimentos': Color(0xFF3B82F6),
+    'outros': Color(0xFF94A3B8),
   };
 }

@@ -1,21 +1,71 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../providers/ai_categorization_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/shared_widgets.dart';
 
-class AddExpensePage extends StatefulWidget {
+class AddExpensePage extends ConsumerStatefulWidget {
   const AddExpensePage({super.key});
 
   @override
-  State<AddExpensePage> createState() => _AddExpensePageState();
+  ConsumerState<AddExpensePage> createState() => _AddExpensePageState();
 }
 
-class _AddExpensePageState extends State<AddExpensePage> {
+class _AddExpensePageState extends ConsumerState<AddExpensePage> {
   final _formKey = GlobalKey<FormState>();
   final _descController = TextEditingController();
   final _amountController = TextEditingController();
   String _type = 'DESPESA';
   String _category = 'alimentação';
+  Timer? _debounce;
+
+  @override
+  void initState() {
+    super.initState();
+    _descController.addListener(_onDescChanged);
+  }
+
+  void _onDescChanged() {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 1000), () async {
+      final desc = _descController.text;
+      if (desc.isNotEmpty && desc.length > 3) {
+        final suggestion = await ref.read(aiCategorizationProvider.notifier).suggestCategory(desc);
+        if (suggestion != null && mounted) {
+          final mapped = _mapDbCategory(suggestion);
+          if (mapped != null) {
+            setState(() {
+              _category = mapped;
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Categoria selecionada por IA: $mapped'), duration: const Duration(seconds: 2)),
+            );
+          }
+        }
+      }
+    });
+  }
+
+  String? _mapDbCategory(String cat) {
+    final lower = cat.toLowerCase();
+    if (lower.contains('aliment')) return 'alimentação';
+    if (lower.contains('transport')) return 'transporte';
+    if (lower.contains('saúd') || lower.contains('saud')) return 'saúde';
+    if (lower.contains('lazer')) return 'lazer';
+    if (lower.contains('educaç') || lower.contains('estud')) return 'estudos';
+    if (lower.contains('moradia')) return 'moradia';
+    return null;
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _descController.dispose();
+    _amountController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

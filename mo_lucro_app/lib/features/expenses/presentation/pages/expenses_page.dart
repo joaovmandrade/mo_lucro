@@ -41,68 +41,64 @@ class ExpensesPage extends StatelessWidget {
           final exp = _expenses[index];
           final amount = exp['amount'] as double;
           final isIncome = amount >= 0;
-          return Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.03),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: (isIncome ? AppColors.profit : AppColors.error)
-                        .withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    _getCategoryIcon(exp['category'] as String),
-                    color: isIncome ? AppColors.profit : AppColors.error,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        exp['desc'] as String,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 15,
-                        ),
+          final isLast = index == _expenses.length - 1;
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.border),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${(exp['category'] as String)[0].toUpperCase()}${(exp['category'] as String).substring(1)} • ${exp['date']}',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textTertiary,
-                        ),
+                      child: Icon(
+                        _getCategoryIcon(exp['category'] as String),
+                        color: isIncome ? AppColors.profit : AppColors.error,
+                        size: 20,
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            exp['desc'] as String,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w500,
+                              fontSize: 16,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${(exp['category'] as String)[0].toUpperCase()}${(exp['category'] as String).substring(1)} • ${exp['date']}',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      '${isIncome ? '+' : ''}R\$ ${amount.abs().toStringAsFixed(2).replaceAll('.', ',')}',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                        color: isIncome ? AppColors.profit : AppColors.error,
+                      ),
+                    ),
+                  ],
                 ),
-                Text(
-                  '${isIncome ? '+' : ''}R\$ ${amount.toStringAsFixed(2).replaceAll('.', ',')}',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                    color: isIncome ? AppColors.profit : AppColors.error,
-                  ),
-                ),
-              ],
-            ),
+              ),
+              if (!isLast)
+                const Divider(height: 1, indent: 56),
+            ],
           );
         },
       ),
