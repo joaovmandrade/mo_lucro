@@ -13,6 +13,7 @@ import '../routes/api/v1/reports/diversification.dart' as api_v1_reports_diversi
 import '../routes/api/v1/profile/result.dart' as api_v1_profile_result;
 import '../routes/api/v1/profile/recommendations.dart' as api_v1_profile_recommendations;
 import '../routes/api/v1/profile/quiz.dart' as api_v1_profile_quiz;
+import '../routes/api/v1/news/index.dart' as api_v1_news_index;
 import '../routes/api/v1/market/stock/[symbol].dart' as api_v1_market_stock_$symbol;
 import '../routes/api/v1/market/history/[symbol].dart' as api_v1_market_history_$symbol;
 import '../routes/api/v1/market/crypto/[id].dart' as api_v1_market_crypto_$id;
@@ -55,6 +56,7 @@ Handler buildRootHandler() {
     ..mount('/', (context) => buildHandler()(context))
     ..mount('/api/v1/reports', (context) => buildApiV1ReportsHandler()(context))
     ..mount('/api/v1/profile', (context) => buildApiV1ProfileHandler()(context))
+    ..mount('/api/v1/news', (context) => buildApiV1NewsHandler()(context))
     ..mount('/api/v1/market/stock', (context) => buildApiV1MarketStockHandler()(context))
     ..mount('/api/v1/market/history', (context) => buildApiV1MarketHistoryHandler()(context))
     ..mount('/api/v1/market/crypto', (context) => buildApiV1MarketCryptoHandler()(context))
@@ -88,6 +90,13 @@ Handler buildApiV1ProfileHandler() {
   final pipeline = const Pipeline().addMiddleware(api_v1_middleware.middleware);
   final router = Router()
     ..all('/quiz', (context) => api_v1_profile_quiz.onRequest(context,))..all('/recommendations', (context) => api_v1_profile_recommendations.onRequest(context,))..all('/result', (context) => api_v1_profile_result.onRequest(context,));
+  return pipeline.addHandler(router);
+}
+
+Handler buildApiV1NewsHandler() {
+  final pipeline = const Pipeline().addMiddleware(api_v1_middleware.middleware);
+  final router = Router()
+    ..all('/', (context) => api_v1_news_index.onRequest(context,));
   return pipeline.addHandler(router);
 }
 
