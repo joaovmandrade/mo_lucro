@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/news_article.dart';
+import '../../core/utils/api_config.dart';
 
 /// Data source for financial news — hits backend, falls back to static data.
 class NewsDataSource {
-  static const _baseUrl = 'http://localhost:8080/api/v1/news';
+  String get _baseUrl => '${ApiConfig.apiV1BaseUrl}/news';
 
   Future<List<NewsArticle>> getNews() async {
     try {

@@ -1,16 +1,13 @@
 import 'dart:convert';
 import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
-import 'package:dotenv/dotenv.dart';
+import 'package:mo_lucro_backend/core/config.dart';
 
 /// Service to integrate with OpenAI for expense categorization.
 class AiCategorizationService {
   final String _baseUrl = 'https://api.openai.com/v1/chat/completions';
 
-  String get _apiKey {
-    var env = DotEnv(includePlatformEnvironment: true)..load();
-    return env['OPENAI_API_KEY'] ?? '';
-  }
+  String get _apiKey => AppConfig.openAiApiKey;
 
   /// Automatically categorize an expense based on its description.
   Future<Map<String, dynamic>> categorizeExpense(String description) async {

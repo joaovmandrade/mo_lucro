@@ -6,7 +6,9 @@ import 'dart:io';
 import 'package:dart_frog/dart_frog.dart';
 
 
+import '../routes/index.dart' as index;
 import '../routes/health.dart' as health;
+import '../routes/api/v1/index.dart' as api_v1_index;
 import '../routes/api/v1/reports/risk.dart' as api_v1_reports_risk;
 import '../routes/api/v1/reports/maturities.dart' as api_v1_reports_maturities;
 import '../routes/api/v1/reports/diversification.dart' as api_v1_reports_diversification;
@@ -54,6 +56,7 @@ Handler buildRootHandler() {
   final pipeline = const Pipeline().addMiddleware(middleware.middleware);
   final router = Router()
     ..mount('/', (context) => buildHandler()(context))
+    ..mount('/api/v1', (context) => buildApiV1Handler()(context))
     ..mount('/api/v1/reports', (context) => buildApiV1ReportsHandler()(context))
     ..mount('/api/v1/profile', (context) => buildApiV1ProfileHandler()(context))
     ..mount('/api/v1/news', (context) => buildApiV1NewsHandler()(context))
@@ -75,7 +78,14 @@ Handler buildRootHandler() {
 Handler buildHandler() {
   final pipeline = const Pipeline();
   final router = Router()
-    ..all('/health', (context) => health.onRequest(context,));
+    ..all('/health', (context) => health.onRequest(context,))..all('/', (context) => index.onRequest(context,));
+  return pipeline.addHandler(router);
+}
+
+Handler buildApiV1Handler() {
+  final pipeline = const Pipeline().addMiddleware(api_v1_middleware.middleware);
+  final router = Router()
+    ..all('/', (context) => api_v1_index.onRequest(context,));
   return pipeline.addHandler(router);
 }
 

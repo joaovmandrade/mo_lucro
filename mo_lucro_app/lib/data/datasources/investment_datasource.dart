@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../../core/utils/api_config.dart';
 
 /// Mock offline data source for investments API.
 class InvestmentDataSource {
@@ -37,14 +38,15 @@ class InvestmentDataSource {
     }
   ];
 
-  final String _baseUrl = 'http://localhost:8080/api/v1';
+  String get _baseUrl => ApiConfig.apiV1BaseUrl;
 
   Future<void> refreshMarketPrices() async {
     for (var inv in _mockInvestments) {
       if (inv['symbol'] != null && inv['symbol'].toString().isNotEmpty) {
         try {
           if (inv['type'] == 'ACOES') {
-            final res = await http.get(Uri.parse('$_baseUrl/market/stock/${inv['symbol']}'));
+            final symbol = Uri.encodeComponent(inv['symbol'].toString());
+            final res = await http.get(Uri.parse('$_baseUrl/market/stock/$symbol'));
             if (res.statusCode == 200) {
               final data = jsonDecode(res.body);
               final price = data['price'] as num?;
@@ -53,7 +55,8 @@ class InvestmentDataSource {
               }
             }
           } else if (inv['type'] == 'CRIPTO') {
-            final res = await http.get(Uri.parse('$_baseUrl/market/crypto/${inv['symbol']}'));
+            final symbol = Uri.encodeComponent(inv['symbol'].toString());
+            final res = await http.get(Uri.parse('$_baseUrl/market/crypto/$symbol'));
             if (res.statusCode == 200) {
               final data = jsonDecode(res.body);
               final price = data['brl'] as num? ?? data['usd'] as num?; 
@@ -75,11 +78,23 @@ class InvestmentDataSource {
     int limit = 20,
   }) async {
     await Future.delayed(const Duration(seconds: 1));
+
+    final filteredInvestments = type == null || type.isEmpty
+        ? _mockInvestments
+        : _mockInvestments.where((investment) => investment['type'] == type).toList();
+    final startIndex = (page - 1) * limit;
+    final items = filteredInvestments.skip(startIndex).take(limit).toList();
+
     return {
-      'items': _mockInvestments,
-      'total': _mockInvestments.length,
-      'page': page,
-      'totalPages': 1,
+      'items': items,
+      'pagination': {
+        'total': filteredInvestments.length,
+        'page': page,
+        'limit': limit,
+        'totalPages': filteredInvestments.isEmpty
+            ? 0
+            : (filteredInvestments.length / limit).ceil(),
+      },
     };
   }
 

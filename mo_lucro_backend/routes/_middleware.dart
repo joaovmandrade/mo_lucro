@@ -1,6 +1,5 @@
 import 'package:dart_frog/dart_frog.dart';
 import 'package:mo_lucro_backend/core/config.dart';
-import 'package:mo_lucro_backend/core/database.dart';
 import 'package:mo_lucro_backend/repositories/user_repository.dart';
 import 'package:mo_lucro_backend/repositories/investment_repository.dart';
 import 'package:mo_lucro_backend/repositories/expense_repository.dart';
@@ -92,7 +91,8 @@ Middleware _dependencyInjection() {
   final investmentService = InvestmentService(investmentRepo);
   final expenseService = ExpenseService(expenseRepo);
   final goalService = GoalService(goalRepo);
-  final dashboardService = DashboardService(investmentRepo, expenseRepo, goalRepo);
+  final dashboardService =
+      DashboardService(investmentRepo, expenseRepo, goalRepo);
   final calculatorService = CalculatorService();
   final riskAnalyzerService = RiskAnalyzerService(investmentRepo);
   final profileQuizService = ProfileQuizService();

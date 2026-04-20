@@ -1,11 +1,12 @@
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
+import '../core/utils/api_config.dart';
 
 class AiCategorizationNotifier extends StateNotifier<String?> {
   AiCategorizationNotifier() : super(null);
 
-  final String _baseUrl = 'http://localhost:8080/api/v1';
+  String get _baseUrl => ApiConfig.apiV1BaseUrl;
 
   Future<String?> suggestCategory(String description) async {
     if (description.isEmpty || description.length < 3) return null;

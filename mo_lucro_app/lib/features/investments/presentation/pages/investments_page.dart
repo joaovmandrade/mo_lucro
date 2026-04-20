@@ -32,6 +32,12 @@ class _InvestmentsPageState extends ConsumerState<InvestmentsPage>
   }
 
   @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final state = ref.watch(investmentProvider);
 
@@ -50,7 +56,9 @@ class _InvestmentsPageState extends ConsumerState<InvestmentsPage>
           indicatorColor: AppColors.primary,
           labelColor: AppColors.primary,
           unselectedLabelColor: AppColors.textTertiary,
-          tabs: _tabs.map((t) => Tab(text: t == 'Todos' ? t : t.replaceAll('_', ' '))).toList(),
+          tabs: _tabs
+              .map((t) => Tab(text: t == 'Todos' ? t : t.replaceAll('_', ' ')))
+              .toList(),
         ),
       ),
       body: state.isLoading 

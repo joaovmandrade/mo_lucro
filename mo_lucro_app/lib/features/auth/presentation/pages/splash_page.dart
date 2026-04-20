@@ -42,7 +42,7 @@ class _SplashPageState extends ConsumerState<SplashPage>
 
     if (mounted) {
       final isAuth = ref.read(authProvider).isAuthenticated;
-      context.go(isAuth ? '/dashboard' : '/onboarding');
+      context.go(isAuth ? '/dashboard' : '/login');
     }
   }
 

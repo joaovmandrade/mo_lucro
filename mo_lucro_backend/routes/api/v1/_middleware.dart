@@ -31,15 +31,6 @@ Handler middleware(Handler handler) {
       return JsonResponse.unauthorized('Token inválido ou expirado');
     }
 
-    // Add userId to request headers for downstream use
-    // We use a custom header approach since dart_frog context is immutable
-    final updatedRequest = context.request.copyWith(
-      headers: {
-        ...context.request.headers,
-        'X-User-Id': userId,
-      },
-    );
-
     // Create new context with the user ID
     final updatedContext = context.provide<String>(() => userId);
     return handler(updatedContext);

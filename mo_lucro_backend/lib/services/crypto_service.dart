@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
-import 'package:dotenv/dotenv.dart';
+import 'package:mo_lucro_backend/core/config.dart';
 import '../repositories/market_cache_repository.dart';
 
 /// Service to integrate with CoinGecko API.
@@ -11,10 +11,7 @@ class CryptoService {
 
   CryptoService(this._cacheRepository);
 
-  String get _apiKey {
-    var env = DotEnv(includePlatformEnvironment: true)..load();
-    return env['COINGECKO_API_KEY'] ?? '';
-  }
+  String get _apiKey => AppConfig.coinGeckoApiKey;
 
   /// Get real-time cryptocurrency data.
   Future<Map<String, dynamic>> getCryptoData(String id) async {

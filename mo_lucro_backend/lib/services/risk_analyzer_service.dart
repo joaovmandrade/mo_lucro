@@ -7,12 +7,8 @@ class RiskAnalyzerService {
   RiskAnalyzerService(this._investmentRepo);
 
   // Asset classification
-  static const _rendaFixa = {
-    'CDB', 'TESOURO_DIRETO', 'POUPANCA', 'CAIXA'
-  };
-  static const _rendaVariavel = {
-    'ACOES', 'FUNDOS_IMOBILIARIOS', 'CRIPTO'
-  };
+  static const _rendaFixa = {'CDB', 'TESOURO_DIRETO', 'POUPANCA', 'CAIXA'};
+  static const _rendaVariavel = {'ACOES', 'FUNDOS_IMOBILIARIOS', 'CRIPTO'};
 
   /// Analyze portfolio risk.
   Future<Map<String, dynamic>> analyzeRisk(String userId) async {
@@ -25,7 +21,9 @@ class RiskAnalyzerService {
         'riskLevel': 'INDEFINIDO',
         'riskScore': 0,
         'observations': ['Você ainda não possui investimentos cadastrados.'],
-        'suggestions': ['Comece cadastrando seus investimentos para uma análise completa.'],
+        'suggestions': [
+          'Comece cadastrando seus investimentos para uma análise completa.'
+        ],
         'alerts': [],
         'distribution': {},
       };
@@ -34,15 +32,12 @@ class RiskAnalyzerService {
     // Calculate fixed vs variable income percentages
     double fixedIncomeTotal = 0;
     double variableIncomeTotal = 0;
-    double othersTotal = 0;
 
     for (final entry in distribution.entries) {
       if (_rendaFixa.contains(entry.key)) {
         fixedIncomeTotal += entry.value;
       } else if (_rendaVariavel.contains(entry.key)) {
         variableIncomeTotal += entry.value;
-      } else {
-        othersTotal += entry.value;
       }
     }
 
@@ -70,9 +65,11 @@ class RiskAnalyzerService {
     }
 
     // Liquidity analysis
-    final lowLiquidityCount = investments.where(
-      (i) => i.liquidity == 'NO_VENCIMENTO',
-    ).length;
+    final lowLiquidityCount = investments
+        .where(
+          (i) => i.liquidity == 'NO_VENCIMENTO',
+        )
+        .length;
     if (lowLiquidityCount > investments.length * 0.6) {
       alerts.add(
         'Mais de 60% dos seus investimentos têm liquidez apenas '

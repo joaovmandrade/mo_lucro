@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:dart_frog/dart_frog.dart';
+import 'package:mo_lucro_backend/core/config.dart';
 
 /// GET /api/v1/news
 /// Returns financial news. Uses GNews API if key is set, else curated static data.
@@ -9,7 +10,7 @@ Future<Response> onRequest(RequestContext context) async {
     return Response(statusCode: HttpStatus.methodNotAllowed);
   }
 
-  final apiKey = Platform.environment['GNEWS_API_KEY'] ?? '';
+  final apiKey = AppConfig.gNewsApiKey;
 
   if (apiKey.isNotEmpty) {
     try {

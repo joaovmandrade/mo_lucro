@@ -4,9 +4,18 @@ import 'package:dotenv/dotenv.dart';
 /// Application configuration loaded from environment variables.
 class AppConfig {
   static DotEnv? _env;
+  static bool _initialized = false;
 
   static void initialize() {
-    _env = DotEnv(includePlatformEnvironment: true)..load(['.env']);
+    if (_initialized) return;
+
+    _env = DotEnv(includePlatformEnvironment: true);
+
+    if (File('.env').existsSync()) {
+      _env!.load(['.env']);
+    }
+
+    _initialized = true;
   }
 
   // Database
@@ -23,6 +32,12 @@ class AppConfig {
       int.parse(_get('JWT_ACCESS_EXPIRY_MINUTES', '15'));
   static int get jwtRefreshExpiryDays =>
       int.parse(_get('JWT_REFRESH_EXPIRY_DAYS', '7'));
+
+  // External APIs
+  static String get alphaVantageApiKey => _get('ALPHA_VANTAGE_API_KEY', '');
+  static String get coinGeckoApiKey => _get('COINGECKO_API_KEY', '');
+  static String get openAiApiKey => _get('OPENAI_API_KEY', '');
+  static String get gNewsApiKey => _get('GNEWS_API_KEY', '');
 
   // Server
   static int get port => int.parse(_get('PORT', '8080'));
