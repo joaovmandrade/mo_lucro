@@ -14,7 +14,6 @@ import 'services/supabase_config.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Lock to portrait
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
@@ -23,11 +22,10 @@ Future<void> main() async {
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.light,
-    systemNavigationBarColor: AppColors.bg1,
+    systemNavigationBarColor: Color(0xFF111827),
     systemNavigationBarIconBrightness: Brightness.light,
   ));
 
-  // Initialize pt_BR locale for NumberFormat / DateFormat
   await initializeDateFormatting('pt_BR', null);
 
   Widget app = const MoLucroApp();
@@ -68,7 +66,6 @@ class _AuthGate extends StatelessWidget {
     return StreamBuilder<AuthState>(
       stream: client.auth.onAuthStateChange,
       builder: (context, snapshot) {
-        // While waiting, check if we already have a session
         final session =
             snapshot.data?.session ?? client.auth.currentSession;
 
@@ -77,17 +74,16 @@ class _AuthGate extends StatelessWidget {
           return const _SplashScreen();
         }
 
-        if (session == null) {
-          return const LoginPage();
-        }
-
+        if (session == null) return const LoginPage();
         return const _AppShell();
       },
     );
   }
 }
 
-/// Bottom navigation shell holding the 4 main tabs.
+// ─────────────────────────────────────────────────────────────
+// App Shell — custom bottom nav matching Figma
+// ─────────────────────────────────────────────────────────────
 class _AppShell extends StatefulWidget {
   const _AppShell();
 
@@ -96,7 +92,7 @@ class _AppShell extends StatefulWidget {
 }
 
 class _AppShellState extends State<_AppShell> {
-  int _currentIndex = 0;
+  int _idx = 0;
 
   static const _pages = [
     DashboardPage(),
@@ -105,65 +101,102 @@ class _AppShellState extends State<_AppShell> {
     GoalsPage(),
   ];
 
+  static const _navItems = [
+    _NavDef(Icons.home_outlined, Icons.home_rounded, 'Dashboard'),
+    _NavDef(Icons.pie_chart_outline_rounded, Icons.pie_chart_rounded,
+        'Portfólio'),
+    _NavDef(Icons.receipt_long_outlined, Icons.receipt_long_rounded,
+        'Transações'),
+    _NavDef(Icons.flag_outlined, Icons.flag_rounded, 'Metas'),
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bg0,
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _pages,
+      body: IndexedStack(index: _idx, children: _pages),
+      bottomNavigationBar: _BottomNav(
+        currentIndex: _idx,
+        items: _navItems,
+        onTap: (i) => setState(() => _idx = i),
       ),
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: AppColors.bg1,
-          border: Border(
-            top: BorderSide(color: AppColors.border, width: 1),
+    );
+  }
+}
+
+class _NavDef {
+  final IconData icon;
+  final IconData activeIcon;
+  final String label;
+  const _NavDef(this.icon, this.activeIcon, this.label);
+}
+
+class _BottomNav extends StatelessWidget {
+  final int currentIndex;
+  final List<_NavDef> items;
+  final ValueChanged<int> onTap;
+
+  const _BottomNav({
+    required this.currentIndex,
+    required this.items,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: AppColors.bg1,
+        border: Border(top: BorderSide(color: AppColors.border)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 60,
+          child: Row(
+            children: List.generate(items.length, (i) {
+              final active = i == currentIndex;
+              final color =
+                  active ? AppColors.primary : AppColors.textMuted;
+              final item = items[i];
+              return Expanded(
+                child: GestureDetector(
+                  onTap: () => onTap(i),
+                  behavior: HitTestBehavior.opaque,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        active ? item.activeIcon : item.icon,
+                        color: color,
+                        size: 24,
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        item.label,
+                        style: TextStyle(
+                          color: color,
+                          fontSize: 10,
+                          fontWeight: active
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
           ),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (i) => setState(() => _currentIndex = i),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          selectedItemColor: AppColors.primary,
-          unselectedItemColor: AppColors.textMuted,
-          selectedLabelStyle: const TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-          ),
-          unselectedLabelStyle: const TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
-          ),
-          type: BottomNavigationBarType.fixed,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              activeIcon: Icon(Icons.home_rounded),
-              label: 'Dashboard',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.pie_chart_outline_rounded),
-              activeIcon: Icon(Icons.pie_chart_rounded),
-              label: 'Portfólio',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.receipt_long_outlined),
-              activeIcon: Icon(Icons.receipt_long_rounded),
-              label: 'Transações',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.flag_outlined),
-              activeIcon: Icon(Icons.flag_rounded),
-              label: 'Metas',
-            ),
-          ],
         ),
       ),
     );
   }
 }
 
+// ─────────────────────────────────────────────────────────────
+// Splash
+// ─────────────────────────────────────────────────────────────
 class _SplashScreen extends StatelessWidget {
   const _SplashScreen();
 
@@ -176,36 +209,30 @@ class _SplashScreen extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [AppColors.primary, AppColors.accent],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(24),
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(20),
               ),
               child: const Icon(Icons.trending_up_rounded,
-                  color: AppColors.bg0, size: 40),
+                  color: Colors.white, size: 36),
             ),
             const SizedBox(height: 20),
             const Text(
               'Mo Lucro',
               style: TextStyle(
                 color: AppColors.textPrimary,
-                fontSize: 28,
+                fontSize: 26,
                 fontWeight: FontWeight.w800,
-                letterSpacing: -1,
+                letterSpacing: -0.5,
               ),
             ),
             const SizedBox(height: 32),
             const SizedBox(
-              width: 24,
-              height: 24,
+              width: 22,
+              height: 22,
               child: CircularProgressIndicator(
-                color: AppColors.primary,
-                strokeWidth: 2.5,
-              ),
+                  color: AppColors.primary, strokeWidth: 2.5),
             ),
           ],
         ),
@@ -216,7 +243,6 @@ class _SplashScreen extends StatelessWidget {
 
 class _StartupErrorApp extends StatelessWidget {
   final String message;
-
   const _StartupErrorApp({required this.message});
 
   @override

@@ -26,18 +26,21 @@ class GoalService {
     required String title,
     required double targetValue,
     double currentValue = 0,
+    DateTime? deadline,
   }) async {
-    // Use live table column names: name / target / current
-    await _db.from('goals').insert({
+    final payload = <String, dynamic>{
       'user_id': _userId,
       'name': title,
       'target': targetValue,
       'current': currentValue,
-    });
+    };
+    if (deadline != null) {
+      payload['deadline'] = deadline.toIso8601String();
+    }
+    await _db.from('goals').insert(payload);
   }
 
   Future<void> updateGoalProgress(String id, double currentValue) async {
-    // Live table uses 'current', not 'current_value'
     await _db
         .from('goals')
         .update({'current': currentValue}).eq('id', id);

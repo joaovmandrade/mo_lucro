@@ -4,9 +4,7 @@ import '../services/transaction_service.dart';
 import '../utils/formatters.dart';
 
 class AddTransactionPage extends StatefulWidget {
-  /// 'income' or 'expense' — pre-selected type
   final String initialType;
-
   const AddTransactionPage({super.key, this.initialType = 'expense'});
 
   @override
@@ -14,31 +12,33 @@ class AddTransactionPage extends StatefulWidget {
 }
 
 class _AddTransactionPageState extends State<AddTransactionPage> {
-  final _service = TransactionService();
-  final _formKey = GlobalKey<FormState>();
-  final _amountController = TextEditingController();
-  final _descController = TextEditingController();
+  final _service     = TransactionService();
+  final _formKey     = GlobalKey<FormState>();
+  final _amountCtrl  = TextEditingController();
+  final _descCtrl    = TextEditingController();
 
   late String _type;
-  String _category = 'others';
-  DateTime _date = DateTime.now();
-  bool _loading = false;
+  String   _category = 'others';
+  DateTime _date     = DateTime.now();
+  bool     _loading  = false;
 
   static const _expenseCategories = {
-    'food': 'Alimentação',
-    'transport': 'Transporte',
-    'health': 'Saúde',
-    'education': 'Educação',
-    'entertainment': 'Lazer',
-    'housing': 'Moradia',
-    'utilities': 'Utilidades',
-    'others': 'Outros',
+    'food':          ('Alimentação',  Icons.restaurant_outlined),
+    'transport':     ('Transporte',   Icons.directions_car_outlined),
+    'health':        ('Saúde',        Icons.local_hospital_outlined),
+    'education':     ('Educação',     Icons.school_outlined),
+    'entertainment': ('Lazer',        Icons.movie_outlined),
+    'housing':       ('Moradia',      Icons.home_outlined),
+    'utilities':     ('Utilidades',   Icons.bolt_outlined),
+    'shopping':      ('Compras',      Icons.shopping_bag_outlined),
+    'others':        ('Outros',       Icons.category_outlined),
   };
 
   static const _incomeCategories = {
-    'salary': 'Salário',
-    'investment': 'Investimento',
-    'others': 'Outros',
+    'salary':        ('Salário',      Icons.work_outlined),
+    'investment':    ('Investimento', Icons.trending_up_rounded),
+    'bonus':         ('Bônus',        Icons.stars_rounded),
+    'others':        ('Outros',       Icons.category_outlined),
   };
 
   @override
@@ -49,12 +49,12 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
 
   @override
   void dispose() {
-    _amountController.dispose();
-    _descController.dispose();
+    _amountCtrl.dispose();
+    _descCtrl.dispose();
     super.dispose();
   }
 
-  Map<String, String> get _categories =>
+  Map<String, (String, IconData)> get _categories =>
       _type == 'income' ? _incomeCategories : _expenseCategories;
 
   Future<void> _pickDate() async {
@@ -78,28 +78,35 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() => _loading = true);
     try {
       await _service.addTransaction(
-        type: _type,
-        amount: double.parse(_amountController.text.replaceAll(',', '.')),
-        category: _category,
-        description: _descController.text.trim(),
-        date: _date,
+        type:        _type,
+        amount:      double.parse(_amountCtrl.text.replaceAll(',', '.')),
+        category:    _category,
+        description: _descCtrl.text.trim(),
+        date:        _date,
       );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Transação registrada!')),
+          SnackBar(
+            content: Row(children: [
+              const Icon(Icons.check_circle_outline,
+                  color: AppColors.profit, size: 18),
+              const SizedBox(width: 8),
+              Text(_type == 'income'
+                  ? 'Receita registrada!'
+                  : 'Despesa registrada!'),
+            ]),
+          ),
         );
         Navigator.pop(context, true);
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('Erro: $e'),
+          SnackBar(content: Text('Erro: $e'),
               backgroundColor: AppColors.loss),
         );
       }
@@ -110,12 +117,15 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isIncome = _type == 'income';
+    final isIncome  = _type == 'income';
     final typeColor = isIncome ? AppColors.profit : AppColors.loss;
+    final amount    = double.tryParse(
+            _amountCtrl.text.replaceAll(',', '.')) ?? 0;
 
     return Scaffold(
       backgroundColor: AppColors.bg0,
       appBar: AppBar(
+        backgroundColor: AppColors.bg0,
         title: const Text('Nova Transação'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
@@ -125,11 +135,9 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(AppSpacing.lg),
           children: [
-            // Type toggle
-            _SectionLabel('Tipo'),
-            const SizedBox(height: 8),
+            // ── Type toggle ──────────────────────────────────
             Row(
               children: [
                 _TypeBtn(
@@ -138,12 +146,10 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
                   selected: _type,
                   color: AppColors.profit,
                   icon: Icons.arrow_upward_rounded,
-                  onTap: (v) {
-                    setState(() {
-                      _type = v;
-                      _category = 'others';
-                    });
-                  },
+                  onTap: (v) => setState(() {
+                    _type = v;
+                    _category = 'others';
+                  }),
                 ),
                 const SizedBox(width: 10),
                 _TypeBtn(
@@ -152,91 +158,139 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
                   selected: _type,
                   color: AppColors.loss,
                   icon: Icons.arrow_downward_rounded,
-                  onTap: (v) {
-                    setState(() {
-                      _type = v;
-                      _category = 'others';
-                    });
-                  },
+                  onTap: (v) => setState(() {
+                    _type = v;
+                    _category = 'others';
+                  }),
                 ),
               ],
             ),
+            const SizedBox(height: 24),
+
+            // ── Amount (large) ───────────────────────────────
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.xl),
+              decoration: BoxDecoration(
+                color: typeColor.withOpacity(0.06),
+                borderRadius: BorderRadius.circular(AppRadius.xxl),
+                border: Border.all(color: typeColor.withOpacity(0.2)),
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    isIncome ? 'Valor da Receita' : 'Valor da Despesa',
+                    style: TextStyle(
+                        color: typeColor.withOpacity(0.7),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: _amountCtrl,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: typeColor,
+                      fontSize: 32,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -1,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: '0,00',
+                      hintStyle: TextStyle(
+                          color: typeColor.withOpacity(0.3), fontSize: 32),
+                      prefixText: 'R\$ ',
+                      prefixStyle: TextStyle(
+                          color: typeColor,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700),
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      contentPadding: EdgeInsets.zero,
+                      filled: false,
+                    ),
+                    onChanged: (_) => setState(() {}),
+                    validator: (v) {
+                      if (v == null || v.isEmpty) return 'Informe o valor';
+                      if (double.tryParse(v.replaceAll(',', '.')) == null) {
+                        return 'Valor inválido';
+                      }
+                      return null;
+                    },
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 20),
 
-            // Amount
-            _SectionLabel('Valor'),
-            const SizedBox(height: 8),
-            TextFormField(
-              controller: _amountController,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              style: TextStyle(
-                color: typeColor,
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-              ),
-              decoration: InputDecoration(
-                hintText: '0,00',
-                prefixText: 'R\$ ',
-                prefixStyle: TextStyle(
-                    color: typeColor, fontSize: 16, fontWeight: FontWeight.w700),
-              ),
-              validator: (v) {
-                if (v == null || v.isEmpty) return 'Informe o valor';
-                if (double.tryParse(v.replaceAll(',', '.')) == null)
-                  return 'Valor inválido';
-                return null;
-              },
+            // ── Category grid ────────────────────────────────
+            _FieldLabel('Categoria'),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _categories.entries.map((e) {
+                final isSelected = _category == e.key;
+                return GestureDetector(
+                  onTap: () => setState(() => _category = e.key),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? typeColor.withOpacity(0.12)
+                          : AppColors.bg2,
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                      border: Border.all(
+                        color: isSelected ? typeColor : AppColors.border,
+                        width: isSelected ? 1.5 : 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(e.value.$2,
+                            color: isSelected ? typeColor : AppColors.textMuted,
+                            size: 14),
+                        const SizedBox(width: 5),
+                        Text(
+                          e.value.$1,
+                          style: TextStyle(
+                            color: isSelected
+                                ? typeColor
+                                : AppColors.textSecondary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
             ),
             const SizedBox(height: 16),
 
-            // Category
-            _SectionLabel('Categoria'),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: AppColors.bg2,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: _categories.containsKey(_category)
-                      ? _category
-                      : _categories.keys.first,
-                  dropdownColor: AppColors.bg2,
-                  isExpanded: true,
-                  style: const TextStyle(
-                      color: AppColors.textPrimary, fontSize: 14),
-                  items: _categories.entries
-                      .map((e) => DropdownMenuItem(
-                            value: e.key,
-                            child: Text(e.value),
-                          ))
-                      .toList(),
-                  onChanged: (v) => setState(() => _category = v!),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Description
-            _SectionLabel('Descrição (opcional)'),
+            // ── Description ──────────────────────────────────
+            _FieldLabel('Descrição (opcional)'),
             const SizedBox(height: 8),
             TextFormField(
-              controller: _descController,
+              controller: _descCtrl,
               maxLength: 80,
               style: const TextStyle(color: AppColors.textPrimary),
               decoration: const InputDecoration(
                 hintText: 'Ex: Almoço, Uber, Netflix...',
                 counterText: '',
+                prefixIcon: Icon(Icons.edit_outlined,
+                    color: AppColors.textMuted, size: 18),
               ),
             ),
             const SizedBox(height: 16),
 
-            // Date
-            _SectionLabel('Data'),
+            // ── Date ─────────────────────────────────────────
+            _FieldLabel('Data'),
             const SizedBox(height: 8),
             GestureDetector(
               onTap: _pickDate,
@@ -244,8 +298,8 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
                 padding: const EdgeInsets.symmetric(
                     horizontal: 16, vertical: 16),
                 decoration: BoxDecoration(
-                  color: AppColors.bg2,
-                  borderRadius: BorderRadius.circular(16),
+                  color: AppColors.bg4,
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   border: Border.all(color: AppColors.border),
                 ),
                 child: Row(
@@ -258,6 +312,9 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
                       style: const TextStyle(
                           color: AppColors.textPrimary, fontSize: 14),
                     ),
+                    const Spacer(),
+                    const Icon(Icons.chevron_right_rounded,
+                        color: AppColors.textMuted, size: 18),
                   ],
                 ),
               ),
@@ -266,14 +323,19 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
 
             ElevatedButton(
               onPressed: _loading ? null : _save,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: typeColor,
+              ),
               child: _loading
                   ? const SizedBox(
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2, color: AppColors.bg0),
+                          strokeWidth: 2, color: Colors.white),
                     )
-                  : Text(isIncome ? 'Registrar receita' : 'Registrar despesa'),
+                  : Text(
+                      isIncome ? 'Registrar Receita' : 'Registrar Despesa',
+                    ),
             ),
             const SizedBox(height: 20),
           ],
@@ -283,9 +345,11 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
   }
 }
 
-class _SectionLabel extends StatelessWidget {
+// ── Sub-widgets ───────────────────────────────────────────────
+
+class _FieldLabel extends StatelessWidget {
   final String text;
-  const _SectionLabel(this.text);
+  const _FieldLabel(this.text);
 
   @override
   Widget build(BuildContext context) => Text(
@@ -294,7 +358,7 @@ class _SectionLabel extends StatelessWidget {
           color: AppColors.textSecondary,
           fontSize: 12,
           fontWeight: FontWeight.w600,
-          letterSpacing: 0.5,
+          letterSpacing: 0.4,
         ),
       );
 }
@@ -319,7 +383,6 @@ class _TypeBtn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isSelected = value == selected;
-
     return Expanded(
       child: GestureDetector(
         onTap: () => onTap(value),
@@ -327,8 +390,8 @@ class _TypeBtn extends StatelessWidget {
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(vertical: 14),
           decoration: BoxDecoration(
-            color: isSelected ? color.withOpacity(0.15) : AppColors.bg2,
-            borderRadius: BorderRadius.circular(14),
+            color: isSelected ? color.withOpacity(0.12) : AppColors.bg2,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             border: Border.all(
               color: isSelected ? color : AppColors.border,
               width: isSelected ? 1.5 : 1,
@@ -337,7 +400,8 @@ class _TypeBtn extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: isSelected ? color : AppColors.textMuted, size: 16),
+              Icon(icon,
+                  color: isSelected ? color : AppColors.textMuted, size: 16),
               const SizedBox(width: 6),
               Text(
                 label,

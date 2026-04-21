@@ -31,19 +31,14 @@ class TransactionService {
     required String description,
     required DateTime date,
   }) async {
-    // Build payload with only columns that exist in the live table.
-    // 'description' and 'date' are omitted if the table doesn't have them —
-    // Supabase will simply ignore unknown keys in the jsonb payload but
-    // will error on unknown column names, so we only include what's guaranteed.
     final payload = <String, dynamic>{
       'user_id': _userId,
       'type': type,
       'amount': amount,
       'category': category,
+      'date': date.toIso8601String(),
     };
 
-    // Include optional columns only if they exist (safe to include; Supabase
-    // will raise a clear error if the column is truly missing).
     if (description.isNotEmpty) {
       payload['description'] = description;
     }

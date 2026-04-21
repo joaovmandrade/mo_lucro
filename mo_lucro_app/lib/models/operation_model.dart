@@ -1,9 +1,9 @@
 class OperationModel {
   final String id;
   final String userId;
-  final String type; // 'buy' | 'sell'
+  final String type; // 'buy' | 'sell' | 'dividend'
   final String asset;
-  final String category; // 'stocks' | 'crypto' | 'fixed_income' | 'others'
+  final String category; // 'stocks' | 'crypto' | 'fixed_income' | 'fiis' | 'others'
   final double quantity;
   final double price;
   final double total;
@@ -20,6 +20,10 @@ class OperationModel {
     required this.total,
     required this.date,
   });
+
+  bool get isBuy => type == 'buy';
+  bool get isSell => type == 'sell';
+  bool get isDividend => type == 'dividend';
 
   factory OperationModel.fromMap(Map<String, dynamic> map) {
     return OperationModel(
@@ -48,5 +52,5 @@ class OperationModel {
 
   @override
   String toString() =>
-      'OperationModel(id: $id, asset: $asset, type: $type, quantity: $quantity, price: $price)';
+      'OperationModel(id: $id, asset: $asset, type: $type, qty: $quantity, price: $price)';
 }

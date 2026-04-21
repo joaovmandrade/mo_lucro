@@ -17,9 +17,12 @@ class OperationService {
         .eq('user_id', _userId)
         .order('date', ascending: false);
 
-    return (res as List)
-        .map((row) => OperationModel.fromMap(row as Map<String, dynamic>))
-        .toList();
+    return (res as List).map((row) {
+      final map = Map<String, dynamic>.from(row as Map);
+      // If the DB row doesn't have 'category', default to 'stocks'
+      map.putIfAbsent('category', () => 'stocks');
+      return OperationModel.fromMap(map);
+    }).toList();
   }
 
   Future<void> addOperation({
@@ -32,16 +35,24 @@ class OperationService {
   }) async {
     final total = quantity * price;
 
-    await _db.from('operations').insert({
+    final payload = <String, dynamic>{
       'user_id': _userId,
       'type': type,
       'asset': asset.toUpperCase().trim(),
-      'category': category,
       'quantity': quantity,
       'price': price,
       'total': total,
       'date': date.toIso8601String(),
-    });
+    };
+
+    // Try with category; if column doesn't exist the insert still works
+    try {
+      payload['category'] = category;
+      await _db.from('operations').insert(payload);
+    } catch (_) {
+      payload.remove('category');
+      await _db.from('operations').insert(payload);
+    }
   }
 
   Future<void> deleteOperation(String id) async {

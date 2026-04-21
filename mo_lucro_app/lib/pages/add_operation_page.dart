@@ -39,8 +39,12 @@ class _AddOperationPageState extends State<AddOperationPage> {
   }
 
   double get _total {
-    final qty = double.tryParse(_quantityController.text) ?? 0;
-    final price = double.tryParse(_priceController.text) ?? 0;
+    final qty = double.tryParse(
+            _quantityController.text.replaceAll(',', '.')) ??
+        0;
+    final price = double.tryParse(
+            _priceController.text.replaceAll(',', '.')) ??
+        0;
     return qty * price;
   }
 
@@ -55,16 +59,34 @@ class _AddOperationPageState extends State<AddOperationPage> {
           colorScheme: const ColorScheme.dark(
             primary: AppColors.primary,
             surface: AppColors.bg2,
+            onSurface: AppColors.textPrimary,
           ),
+          dialogBackgroundColor: AppColors.bg2,
         ),
         child: child!,
       ),
     );
-    if (picked != null) setState(() => _date = picked);
+    if (picked != null && mounted) {
+      setState(() => _date = picked);
+    }
   }
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+
+    final qty = double.tryParse(
+        _quantityController.text.replaceAll(',', '.'));
+    final price = double.tryParse(
+        _priceController.text.replaceAll(',', '.'));
+
+    if (qty == null || price == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Valores inválidos'),
+            backgroundColor: AppColors.loss),
+      );
+      return;
+    }
 
     setState(() => _loading = true);
     try {
@@ -72,14 +94,13 @@ class _AddOperationPageState extends State<AddOperationPage> {
         type: _type,
         asset: _assetController.text.trim().toUpperCase(),
         category: _category,
-        quantity: double.parse(_quantityController.text),
-        price: double.parse(_priceController.text),
+        quantity: qty,
+        price: price,
         date: _date,
       );
-
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Operação registrada com sucesso!')),
+          const SnackBar(content: Text('Operação registrada!')),
         );
         Navigator.pop(context, true);
       }
@@ -87,7 +108,7 @@ class _AddOperationPageState extends State<AddOperationPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('Erro: ${e.toString()}'),
+              content: Text('Erro: $e'),
               backgroundColor: AppColors.loss),
         );
       }
@@ -112,38 +133,30 @@ class _AddOperationPageState extends State<AddOperationPage> {
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            // Type toggle
-            _SectionLabel('Tipo de operação'),
+            // ── Tipo ────────────────────────────────────────
+            _Label('Tipo de operação'),
             const SizedBox(height: 8),
             Row(
               children: [
-                _TypeButton(
-                  label: 'Compra',
-                  value: 'buy',
-                  selected: _type,
-                  color: AppColors.profit,
-                  onTap: (v) => setState(() => _type = v),
-                ),
+                _TypeBtn(label: 'Compra', value: 'buy',
+                    selected: _type, color: AppColors.profit,
+                    onTap: (v) => setState(() => _type = v)),
                 const SizedBox(width: 10),
-                _TypeButton(
-                  label: 'Venda',
-                  value: 'sell',
-                  selected: _type,
-                  color: AppColors.loss,
-                  onTap: (v) => setState(() => _type = v),
-                ),
+                _TypeBtn(label: 'Venda', value: 'sell',
+                    selected: _type, color: AppColors.loss,
+                    onTap: (v) => setState(() => _type = v)),
               ],
             ),
             const SizedBox(height: 20),
 
-            // Category
-            _SectionLabel('Categoria'),
+            // ── Categoria ───────────────────────────────────
+            _Label('Categoria'),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
                 color: AppColors.bg2,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: AppColors.border),
               ),
               child: DropdownButtonHideUnderline(
@@ -159,14 +172,15 @@ class _AddOperationPageState extends State<AddOperationPage> {
                             child: Text(e.value),
                           ))
                       .toList(),
-                  onChanged: (v) => setState(() => _category = v!),
+                  onChanged: (v) =>
+                      setState(() => _category = v!),
                 ),
               ),
             ),
             const SizedBox(height: 16),
 
-            // Asset
-            _SectionLabel('Código do ativo'),
+            // ── Ativo ────────────────────────────────────────
+            _Label('Código do ativo'),
             const SizedBox(height: 8),
             TextFormField(
               controller: _assetController,
@@ -176,33 +190,41 @@ class _AddOperationPageState extends State<AddOperationPage> {
                   fontWeight: FontWeight.w700,
                   fontSize: 15),
               decoration: const InputDecoration(
-                hintText: 'Ex: PETR4, BTC, TESOURO',
-                prefixIcon: Icon(Icons.bar_chart, color: AppColors.textMuted),
+                hintText: 'Ex: PETR4, BTC',
+                prefixIcon: Icon(Icons.bar_chart,
+                    color: AppColors.textMuted),
               ),
-              validator: (v) =>
-                  v == null || v.isEmpty ? 'Informe o código do ativo' : null,
+              validator: (v) => (v == null || v.trim().isEmpty)
+                  ? 'Informe o código'
+                  : null,
             ),
             const SizedBox(height: 16),
 
-            // Quantity + Price row
+            // ── Qtd + Preço ──────────────────────────────────
             Row(
               children: [
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _SectionLabel('Quantidade'),
+                      _Label('Quantidade'),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _quantityController,
-                        keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true),
-                        style: const TextStyle(color: AppColors.textPrimary),
-                        decoration: const InputDecoration(hintText: '0'),
+                        keyboardType:
+                            const TextInputType.numberWithOptions(
+                                decimal: true),
+                        style: const TextStyle(
+                            color: AppColors.textPrimary),
+                        decoration:
+                            const InputDecoration(hintText: '100'),
                         onChanged: (_) => setState(() {}),
                         validator: (v) {
-                          if (v == null || v.isEmpty) return 'Obrigatório';
-                          if (double.tryParse(v) == null) return 'Inválido';
+                          if (v == null || v.isEmpty)
+                            return 'Obrigatório';
+                          if (double.tryParse(
+                                  v.replaceAll(',', '.')) ==
+                              null) return 'Inválido';
                           return null;
                         },
                       ),
@@ -214,18 +236,24 @@ class _AddOperationPageState extends State<AddOperationPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _SectionLabel('Preço (R\$)'),
+                      _Label('Preço (R\$)'),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _priceController,
-                        keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true),
-                        style: const TextStyle(color: AppColors.textPrimary),
-                        decoration: const InputDecoration(hintText: '0,00'),
+                        keyboardType:
+                            const TextInputType.numberWithOptions(
+                                decimal: true),
+                        style: const TextStyle(
+                            color: AppColors.textPrimary),
+                        decoration:
+                            const InputDecoration(hintText: '28,50'),
                         onChanged: (_) => setState(() {}),
                         validator: (v) {
-                          if (v == null || v.isEmpty) return 'Obrigatório';
-                          if (double.tryParse(v) == null) return 'Inválido';
+                          if (v == null || v.isEmpty)
+                            return 'Obrigatório';
+                          if (double.tryParse(
+                                  v.replaceAll(',', '.')) ==
+                              null) return 'Inválido';
                           return null;
                         },
                       ),
@@ -236,17 +264,17 @@ class _AddOperationPageState extends State<AddOperationPage> {
             ),
             const SizedBox(height: 16),
 
-            // Date
-            _SectionLabel('Data'),
+            // ── Data ────────────────────────────────────────
+            _Label('Data'),
             const SizedBox(height: 8),
             GestureDetector(
               onTap: _pickDate,
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 16),
                 decoration: BoxDecoration(
                   color: AppColors.bg2,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: AppColors.border),
                 ),
                 child: Row(
@@ -257,38 +285,41 @@ class _AddOperationPageState extends State<AddOperationPage> {
                     Text(
                       AppFormatters.dateFull(_date),
                       style: const TextStyle(
-                          color: AppColors.textPrimary, fontSize: 14),
+                          color: AppColors.textPrimary,
+                          fontSize: 14),
                     ),
+                    const Spacer(),
+                    const Icon(Icons.arrow_drop_down_rounded,
+                        color: AppColors.textMuted),
                   ],
                 ),
               ),
             ),
             const SizedBox(height: 24),
 
-            // Total preview
+            // ── Total preview ────────────────────────────────
             if (_total > 0) ...[
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: AppColors.primary.withOpacity(0.06),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                      color: AppColors.primary.withOpacity(0.2)),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Total da operação',
-                      style: TextStyle(
-                          color: AppColors.textSecondary, fontSize: 13),
-                    ),
+                    const Text('Total da operação',
+                        style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 13)),
                     Text(
                       AppFormatters.currency(_total),
                       style: const TextStyle(
-                        color: AppColors.primary,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                      ),
+                          color: AppColors.primary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700),
                     ),
                   ],
                 ),
@@ -296,16 +327,14 @@ class _AddOperationPageState extends State<AddOperationPage> {
               const SizedBox(height: 24),
             ],
 
-            // Save button
+            // ── Save ────────────────────────────────────────
             ElevatedButton(
               onPressed: _loading ? null : _save,
               child: _loading
                   ? const SizedBox(
-                      width: 20,
-                      height: 20,
+                      width: 20, height: 20,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2, color: AppColors.bg0),
-                    )
+                          strokeWidth: 2, color: Colors.white))
                   : const Text('Salvar operação'),
             ),
             const SizedBox(height: 20),
@@ -316,9 +345,10 @@ class _AddOperationPageState extends State<AddOperationPage> {
   }
 }
 
-class _SectionLabel extends StatelessWidget {
+// ── Helpers ───────────────────────────────────────────────────
+class _Label extends StatelessWidget {
   final String text;
-  const _SectionLabel(this.text);
+  const _Label(this.text);
 
   @override
   Widget build(BuildContext context) => Text(
@@ -332,25 +362,22 @@ class _SectionLabel extends StatelessWidget {
       );
 }
 
-class _TypeButton extends StatelessWidget {
+class _TypeBtn extends StatelessWidget {
   final String label;
   final String value;
   final String selected;
   final Color color;
   final ValueChanged<String> onTap;
 
-  const _TypeButton({
-    required this.label,
-    required this.value,
-    required this.selected,
-    required this.color,
+  const _TypeBtn({
+    required this.label, required this.value,
+    required this.selected, required this.color,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final isSelected = value == selected;
-
     return Expanded(
       child: GestureDetector(
         onTap: () => onTap(value),
@@ -358,7 +385,9 @@ class _TypeButton extends StatelessWidget {
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(vertical: 13),
           decoration: BoxDecoration(
-            color: isSelected ? color.withOpacity(0.15) : AppColors.bg2,
+            color: isSelected
+                ? color.withOpacity(0.15)
+                : AppColors.bg2,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
               color: isSelected ? color : AppColors.border,
@@ -369,7 +398,9 @@ class _TypeButton extends StatelessWidget {
             child: Text(
               label,
               style: TextStyle(
-                color: isSelected ? color : AppColors.textSecondary,
+                color: isSelected
+                    ? color
+                    : AppColors.textSecondary,
                 fontWeight: FontWeight.w700,
                 fontSize: 13,
               ),

@@ -15,42 +15,47 @@ class AssetCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Using avg price as current price (no live API)
-    // P&L is 0 until live prices are integrated
     final currentPrice = position.avgPrice;
     final pnl = position.profitLoss(currentPrice);
-    final pnlPercent = position.profitLossPercent(currentPrice);
+    final pnlPct = position.profitLossPercent(currentPrice);
     final isProfit = pnl >= 0;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
       decoration: BoxDecoration(
         color: AppColors.bg2,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.border),
       ),
       child: Column(
         children: [
+          // ── Top row ──────────────────────────────────────────
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Asset avatar
-              _AssetAvatar(asset: position.asset, category: position.category),
-              const SizedBox(width: 14),
+              // Avatar
+              _Avatar(asset: position.asset, category: position.category),
+              const SizedBox(width: 12),
 
-              // Asset info
+              // Name + category tag
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      position.asset,
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    Row(
+                      children: [
+                        Text(
+                          position.asset,
+                          style: const TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        _CategoryTag(category: position.category),
+                      ],
                     ),
                     const SizedBox(height: 2),
                     Text(
@@ -58,27 +63,47 @@ class AssetCard extends StatelessWidget {
                       style: const TextStyle(
                         color: AppColors.textMuted,
                         fontSize: 11,
-                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
                 ),
               ),
 
-              // P&L
+              // P&L + delete button
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
+                  // Delete button
+                  if (onDelete != null)
+                    GestureDetector(
+                      onTap: onDelete,
+                      child: Container(
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          color: AppColors.loss.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                              color: AppColors.loss.withOpacity(0.25)),
+                        ),
+                        child: const Icon(
+                          Icons.delete_outline_rounded,
+                          color: AppColors.loss,
+                          size: 16,
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 6),
                   Text(
                     AppFormatters.currency(pnl),
                     style: TextStyle(
                       color: isProfit ? AppColors.profit : AppColors.loss,
-                      fontSize: 15,
+                      fontSize: 14,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  _PnlBadge(percent: pnlPercent, isProfit: isProfit),
+                  const SizedBox(height: 3),
+                  _PnlBadge(percent: pnlPct, isProfit: isProfit),
                 ],
               ),
             ],
@@ -88,29 +113,23 @@ class AssetCard extends StatelessWidget {
           Container(height: 1, color: AppColors.border),
           const SizedBox(height: 12),
 
-          // Metrics row
+          // ── Metrics ──────────────────────────────────────────
           Row(
             children: [
-              Expanded(
-                child: _MetricCell(
-                  label: 'Qtd',
-                  value: position.quantity % 1 == 0
-                      ? position.quantity.toInt().toString()
-                      : position.quantity.toStringAsFixed(4),
-                ),
+              _Metric(
+                label: 'Qtd',
+                value: position.quantity % 1 == 0
+                    ? position.quantity.toInt().toString()
+                    : position.quantity.toStringAsFixed(4),
               ),
-              Expanded(
-                child: _MetricCell(
-                  label: 'Preço Médio',
-                  value: AppFormatters.currency(position.avgPrice),
-                ),
+              _Metric(
+                label: 'Preço Médio',
+                value: AppFormatters.currency(position.avgPrice),
               ),
-              Expanded(
-                child: _MetricCell(
-                  label: 'Total',
-                  value: AppFormatters.currency(position.totalInvested),
-                  align: CrossAxisAlignment.end,
-                ),
+              _Metric(
+                label: 'Total',
+                value: AppFormatters.currency(position.totalInvested),
+                align: CrossAxisAlignment.end,
               ),
             ],
           ),
@@ -120,35 +139,28 @@ class AssetCard extends StatelessWidget {
   }
 
   String _categoryLabel(String cat) {
-    switch (cat) {
-      case 'stocks':
-        return 'Ações';
-      case 'crypto':
-        return 'Criptomoedas';
-      case 'fixed_income':
-        return 'Renda Fixa';
-      default:
-        return 'Outros';
-    }
+    const map = {
+      'stocks': 'Ações',
+      'crypto': 'Criptomoedas',
+      'fixed_income': 'Renda Fixa',
+      'others': 'Outros',
+    };
+    return map[cat] ?? 'Outros';
   }
 }
 
-class _AssetAvatar extends StatelessWidget {
+// ── Avatar ────────────────────────────────────────────────────
+class _Avatar extends StatelessWidget {
   final String asset;
   final String category;
-
-  const _AssetAvatar({required this.asset, required this.category});
+  const _Avatar({required this.asset, required this.category});
 
   Color get _color {
     switch (category) {
-      case 'stocks':
-        return AppColors.accent;
-      case 'crypto':
-        return AppColors.warning;
-      case 'fixed_income':
-        return AppColors.profit;
-      default:
-        return AppColors.textSecondary;
+      case 'stocks': return AppColors.primary;
+      case 'crypto': return AppColors.warning;
+      case 'fixed_income': return AppColors.profit;
+      default: return AppColors.textSecondary;
     }
   }
 
@@ -159,7 +171,7 @@ class _AssetAvatar extends StatelessWidget {
       height: 44,
       decoration: BoxDecoration(
         color: _color.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(13),
         border: Border.all(color: _color.withOpacity(0.3)),
       ),
       child: Center(
@@ -176,10 +188,54 @@ class _AssetAvatar extends StatelessWidget {
   }
 }
 
+// ── Category tag ─────────────────────────────────────────────
+class _CategoryTag extends StatelessWidget {
+  final String category;
+  const _CategoryTag({required this.category});
+
+  Color get _color {
+    switch (category) {
+      case 'stocks': return AppColors.primary;
+      case 'crypto': return AppColors.warning;
+      case 'fixed_income': return AppColors.profit;
+      default: return AppColors.textMuted;
+    }
+  }
+
+  String get _label {
+    switch (category) {
+      case 'stocks': return 'Ações';
+      case 'crypto': return 'Cripto';
+      case 'fixed_income': return 'Renda Fixa';
+      default: return 'Outros';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      decoration: BoxDecoration(
+        color: _color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: _color.withOpacity(0.25)),
+      ),
+      child: Text(
+        _label,
+        style: TextStyle(
+          color: _color,
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+// ── P&L Badge ─────────────────────────────────────────────────
 class _PnlBadge extends StatelessWidget {
   final double percent;
   final bool isProfit;
-
   const _PnlBadge({required this.percent, required this.isProfit});
 
   @override
@@ -192,23 +248,22 @@ class _PnlBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
-        AppFormatters.percentSimple(percent),
+        '${isProfit ? '+' : ''}${AppFormatters.percentSimple(percent)}%',
         style: TextStyle(
-          color: color,
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
+          color: color, fontSize: 11, fontWeight: FontWeight.w700,
         ),
       ),
     );
   }
 }
 
-class _MetricCell extends StatelessWidget {
+// ── Metric cell ───────────────────────────────────────────────
+class _Metric extends StatelessWidget {
   final String label;
   final String value;
   final CrossAxisAlignment align;
 
-  const _MetricCell({
+  const _Metric({
     required this.label,
     required this.value,
     this.align = CrossAxisAlignment.start,
@@ -216,28 +271,24 @@ class _MetricCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: align,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: AppColors.textMuted,
-            fontSize: 10,
-            fontWeight: FontWeight.w500,
-            letterSpacing: 0.3,
-          ),
-        ),
-        const SizedBox(height: 3),
-        Text(
-          value,
-          style: const TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: align,
+        children: [
+          Text(label,
+              style: const TextStyle(
+                  color: AppColors.textMuted,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 0.3)),
+          const SizedBox(height: 3),
+          Text(value,
+              style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600)),
+        ],
+      ),
     );
   }
 }

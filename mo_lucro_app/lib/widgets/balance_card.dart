@@ -20,123 +20,197 @@ class BalanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isPositive = monthlyGrowthPercent >= 0;
-
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF111827), Color(0xFF1a2340)],
+          // Dark navy card — matches Figma patrimônio card
+          colors: [Color(0xFF111827), Color(0xFF162036)],
         ),
-        border: Border.all(color: AppColors.borderLight, width: 1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.borderLight),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.06),
-            blurRadius: 32,
-            offset: const Offset(0, 8),
+            color: AppColors.primary.withOpacity(0.08),
+            blurRadius: 24,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
       child: isLoading
-          ? const _BalanceSkeleton()
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Saldo Total',
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    _GrowthBadge(percent: monthlyGrowthPercent),
-                  ],
-                ),
-                const SizedBox(height: 10),
-
-                // Main balance
-                Text(
-                  AppFormatters.currency(totalBalance),
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 34,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -1,
-                    height: 1,
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // Divider
-                Container(
-                  height: 1,
-                  color: AppColors.border,
-                ),
-                const SizedBox(height: 20),
-
-                // Sub-metrics row
-                Row(
-                  children: [
-                    Expanded(
-                      child: _MetricItem(
-                        label: 'Investido',
-                        value: AppFormatters.currency(totalInvested),
-                        color: AppColors.accent,
-                      ),
-                    ),
-                    Container(
-                      width: 1,
-                      height: 36,
-                      color: AppColors.border,
-                    ),
-                    Expanded(
-                      child: _MetricItem(
-                        label: 'Disponível',
-                        value: AppFormatters.currency(availableCash),
-                        color: isPositive ? AppColors.profit : AppColors.loss,
-                        align: CrossAxisAlignment.end,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+          ? const _Skeleton()
+          : _Body(
+              totalBalance: totalBalance,
+              totalInvested: totalInvested,
+              availableCash: availableCash,
+              monthlyGrowthPercent: monthlyGrowthPercent,
             ),
     );
   }
 }
 
-class _GrowthBadge extends StatelessWidget {
-  final double percent;
-  const _GrowthBadge({required this.percent});
+class _Body extends StatelessWidget {
+  final double totalBalance;
+  final double totalInvested;
+  final double availableCash;
+  final double monthlyGrowthPercent;
+
+  const _Body({
+    required this.totalBalance,
+    required this.totalInvested,
+    required this.availableCash,
+    required this.monthlyGrowthPercent,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final isPositive = percent >= 0;
+    final isPositive = monthlyGrowthPercent >= 0;
+    final availableColor =
+        availableCash >= 0 ? AppColors.profit : AppColors.loss;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── Row: label + growth badge ──────────────────────
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Patrimônio Total',
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            _GrowthBadge(
+                percent: monthlyGrowthPercent,
+                isPositive: isPositive),
+          ],
+        ),
+        const SizedBox(height: 8),
+
+        // ── Hero value ─────────────────────────────────────
+        Text(
+          AppFormatters.currency(totalBalance),
+          style: const TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 32,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.5,
+            height: 1,
+          ),
+        ),
+        const SizedBox(height: 14),
+
+        // ── Pill chips ─────────────────────────────────────
+        Row(
+          children: [
+            _Chip(
+                icon: Icons.calendar_today_outlined, label: '1 dias'),
+            const SizedBox(width: 8),
+            _Chip(
+                icon: Icons.swap_vert_rounded,
+                label:
+                    '${totalInvested > 0 ? 1 : 0} ativos'),
+          ],
+        ),
+        const SizedBox(height: 16),
+
+        // ── Divider ────────────────────────────────────────
+        Container(height: 1, color: AppColors.border),
+        const SizedBox(height: 16),
+
+        // ── Sub-metrics row ────────────────────────────────
+        Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Investido',
+                    style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    AppFormatters.currency(totalInvested),
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+                width: 1, height: 32, color: AppColors.border),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(left: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Disponível',
+                      style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      AppFormatters.currency(availableCash),
+                      style: TextStyle(
+                        color: availableColor,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+// ── Growth badge ─────────────────────────────────────────────
+class _GrowthBadge extends StatelessWidget {
+  final double percent;
+  final bool isPositive;
+  const _GrowthBadge(
+      {required this.percent, required this.isPositive});
+
+  @override
+  Widget build(BuildContext context) {
     final color = isPositive ? AppColors.profit : AppColors.loss;
-    final bg = color.withOpacity(0.12);
-    final icon = isPositive ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded;
+    final icon = isPositive
+        ? Icons.trending_up_rounded
+        : Icons.trending_down_rounded;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding:
+          const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: bg,
+        color: color.withOpacity(0.15),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: color.withOpacity(0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: color, size: 12),
+          Icon(icon, color: color, size: 13),
           const SizedBox(width: 4),
           Text(
             '${percent.abs().toStringAsFixed(1)}%',
@@ -152,45 +226,33 @@ class _GrowthBadge extends StatelessWidget {
   }
 }
 
-class _MetricItem extends StatelessWidget {
+// ── Pill chip ─────────────────────────────────────────────────
+class _Chip extends StatelessWidget {
+  final IconData icon;
   final String label;
-  final String value;
-  final Color color;
-  final CrossAxisAlignment align;
-
-  const _MetricItem({
-    required this.label,
-    required this.value,
-    required this.color,
-    this.align = CrossAxisAlignment.start,
-  });
+  const _Chip({required this.icon, required this.label});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-        left: align == CrossAxisAlignment.start ? 0 : 16,
-        right: align == CrossAxisAlignment.end ? 0 : 16,
+    return Container(
+      padding:
+          const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: AppColors.bg3,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border),
       ),
-      child: Column(
-        crossAxisAlignment: align,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
+          Icon(icon, color: AppColors.textSecondary, size: 12),
+          const SizedBox(width: 5),
           Text(
             label,
             style: const TextStyle(
-              color: AppColors.textMuted,
+              color: AppColors.textPrimary,
               fontSize: 11,
               fontWeight: FontWeight.w500,
-              letterSpacing: 0.5,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: TextStyle(
-              color: color,
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
             ),
           ),
         ],
@@ -199,37 +261,34 @@ class _MetricItem extends StatelessWidget {
   }
 }
 
-class _BalanceSkeleton extends StatelessWidget {
-  const _BalanceSkeleton();
+// ── Loading skeleton ─────────────────────────────────────────
+class _Skeleton extends StatelessWidget {
+  const _Skeleton();
+
+  Widget _box(double w, double h) => Container(
+        width: w,
+        height: h,
+        decoration: BoxDecoration(
+          color: AppColors.bg3,
+          borderRadius: BorderRadius.circular(6),
+        ),
+      );
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _shimmer(width: 80, height: 12),
-        const SizedBox(height: 12),
-        _shimmer(width: 200, height: 34),
-        const SizedBox(height: 24),
-        Row(
-          children: [
-            _shimmer(width: 100, height: 12),
-            const Spacer(),
-            _shimmer(width: 100, height: 12),
-          ],
-        ),
+        _box(90, 12),
+        const SizedBox(height: 10),
+        _box(200, 32),
+        const SizedBox(height: 20),
+        Row(children: [
+          _box(80, 12),
+          const Spacer(),
+          _box(80, 12),
+        ]),
       ],
-    );
-  }
-
-  Widget _shimmer({required double width, required double height}) {
-    return Container(
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        color: AppColors.bg3,
-        borderRadius: BorderRadius.circular(6),
-      ),
     );
   }
 }
