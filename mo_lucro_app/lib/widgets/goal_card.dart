@@ -23,16 +23,10 @@ class GoalCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: AppColors.bg2,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
+        gradient: AppColors.cardGradient,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: color.withOpacity(0.04),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        boxShadow: AppShadows.card,
       ),
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.lg),
@@ -46,7 +40,7 @@ class GoalCard extends StatelessWidget {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.1),
+                    color: color.withOpacity(0.10),
                     borderRadius: BorderRadius.circular(AppRadius.md),
                     border: Border.all(color: color.withOpacity(0.25)),
                   ),
@@ -78,11 +72,16 @@ class GoalCard extends StatelessWidget {
                 ),
                 if (goal.isCompleted)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.profit.withOpacity(0.12),
                       borderRadius: BorderRadius.circular(AppRadius.pill),
-                      border: Border.all(color: AppColors.profit.withOpacity(0.3)),
+                      border: Border.all(
+                        color: AppColors.profit.withOpacity(0.3),
+                      ),
                     ),
                     child: const Text(
                       '✓ Concluída',
@@ -96,24 +95,51 @@ class GoalCard extends StatelessWidget {
                 const SizedBox(width: 4),
                 PopupMenuButton<String>(
                   color: AppColors.bg3,
-                  icon: const Icon(Icons.more_vert, color: AppColors.textMuted, size: 18),
+                  icon: const Icon(
+                    Icons.more_vert,
+                    color: AppColors.textMuted,
+                    size: 18,
+                  ),
                   itemBuilder: (_) => [
                     PopupMenuItem(
                       value: 'add',
-                      child: Row(children: [
-                        const Icon(Icons.add_circle_outline, size: 16, color: AppColors.textSecondary),
-                        const SizedBox(width: 8),
-                        Text('Adicionar valor',
-                            style: TextStyle(color: AppColors.textPrimary, fontSize: 14)),
-                      ]),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.add_circle_outline,
+                            size: 16,
+                            color: AppColors.textSecondary,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Adicionar valor',
+                            style: TextStyle(
+                              color: AppColors.textPrimary,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     PopupMenuItem(
                       value: 'delete',
-                      child: Row(children: [
-                        const Icon(Icons.delete_outline, size: 16, color: AppColors.loss),
-                        const SizedBox(width: 8),
-                        const Text('Excluir', style: TextStyle(color: AppColors.loss, fontSize: 14)),
-                      ]),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.delete_outline,
+                            size: 16,
+                            color: AppColors.loss,
+                          ),
+                          const SizedBox(width: 8),
+                          const Text(
+                            'Excluir',
+                            style: TextStyle(
+                              color: AppColors.loss,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                   onSelected: (val) {
@@ -131,7 +157,7 @@ class GoalCard extends StatelessWidget {
                 Container(
                   height: 8,
                   decoration: BoxDecoration(
-                    color: AppColors.bg4,
+                    color: Colors.white.withOpacity(0.08),
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                 ),
@@ -191,13 +217,19 @@ class GoalCard extends StatelessWidget {
 
   IconData _goalIcon(String title) {
     final t = title.toLowerCase();
-    if (t.contains('emergência') || t.contains('reserva')) return Icons.shield_outlined;
-    if (t.contains('viagem') || t.contains('férias')) return Icons.flight_rounded;
-    if (t.contains('casa') || t.contains('imóvel') || t.contains('apartamento')) {
+    if (t.contains('emergência') || t.contains('reserva'))
+      return Icons.shield_outlined;
+    if (t.contains('viagem') || t.contains('férias'))
+      return Icons.flight_rounded;
+    if (t.contains('casa') ||
+        t.contains('imóvel') ||
+        t.contains('apartamento')) {
       return Icons.home_outlined;
     }
-    if (t.contains('carro') || t.contains('veículo')) return Icons.directions_car_outlined;
-    if (t.contains('aposentadoria') || t.contains('poupança')) return Icons.savings_outlined;
+    if (t.contains('carro') || t.contains('veículo'))
+      return Icons.directions_car_outlined;
+    if (t.contains('aposentadoria') || t.contains('poupança'))
+      return Icons.savings_outlined;
     if (t.contains('educação') || t.contains('curso') || t.contains('estudo')) {
       return Icons.school_outlined;
     }

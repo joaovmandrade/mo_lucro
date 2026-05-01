@@ -20,25 +20,16 @@ class BalanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
       width: double.infinity,
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          // Dark navy card — matches Figma patrimônio card
-          colors: [Color(0xFF111827), Color(0xFF162036)],
-        ),
-        borderRadius: BorderRadius.circular(20),
+        gradient: AppColors.heroGradient,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border.all(color: AppColors.borderLight),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withOpacity(0.08),
-            blurRadius: 24,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        boxShadow: AppShadows.card,
       ),
       child: isLoading
           ? const _Skeleton()
@@ -74,108 +65,62 @@ class _Body extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── Row: label + growth badge ──────────────────────
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'Patrimônio Total',
-              style: TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
+            const Expanded(
+              child: Text(
+                'Patrimônio Total',
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
-            _GrowthBadge(
-                percent: monthlyGrowthPercent,
-                isPositive: isPositive),
+            _GrowthBadge(percent: monthlyGrowthPercent, isPositive: isPositive),
           ],
         ),
-        const SizedBox(height: 8),
-
-        // ── Hero value ─────────────────────────────────────
-        Text(
-          AppFormatters.currency(totalBalance),
-          style: const TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 32,
-            fontWeight: FontWeight.w700,
-            letterSpacing: -0.5,
-            height: 1,
+        const SizedBox(height: 10),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            AppFormatters.currency(totalBalance),
+            style: const TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 32,
+              fontWeight: FontWeight.w700,
+              height: 1,
+              letterSpacing: 0,
+            ),
           ),
         ),
-        const SizedBox(height: 14),
-
-        // ── Pill chips ─────────────────────────────────────
+        const SizedBox(height: 16),
         Row(
-          children: [
-            _Chip(
-                icon: Icons.calendar_today_outlined, label: '1 dias'),
-            const SizedBox(width: 8),
-            _Chip(
-                icon: Icons.swap_vert_rounded,
-                label:
-                    '${totalInvested > 0 ? 1 : 0} ativos'),
+          children: const [
+            _Pill(icon: Icons.shield_outlined, label: 'Carteira consolidada'),
+            SizedBox(width: 8),
+            _Pill(icon: Icons.sync_rounded, label: 'Atualizado'),
           ],
         ),
+        const SizedBox(height: 18),
+        Container(height: 1, color: Colors.white.withOpacity(0.08)),
         const SizedBox(height: 16),
-
-        // ── Divider ────────────────────────────────────────
-        Container(height: 1, color: AppColors.border),
-        const SizedBox(height: 16),
-
-        // ── Sub-metrics row ────────────────────────────────
         Row(
           children: [
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Investido',
-                    style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    AppFormatters.currency(totalInvested),
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
+              child: _Metric(
+                label: 'Investido',
+                value: AppFormatters.currency(totalInvested),
+                color: AppColors.textPrimary,
               ),
             ),
-            Container(
-                width: 1, height: 32, color: AppColors.border),
+            const SizedBox(width: 12),
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.only(left: 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Disponível',
-                      style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      AppFormatters.currency(availableCash),
-                      style: TextStyle(
-                        color: availableColor,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
+              child: _Metric(
+                label: 'Disponível',
+                value: AppFormatters.currency(availableCash),
+                color: availableColor,
               ),
             ),
           ],
@@ -185,27 +130,24 @@ class _Body extends StatelessWidget {
   }
 }
 
-// ── Growth badge ─────────────────────────────────────────────
 class _GrowthBadge extends StatelessWidget {
   final double percent;
   final bool isPositive;
-  const _GrowthBadge(
-      {required this.percent, required this.isPositive});
+
+  const _GrowthBadge({required this.percent, required this.isPositive});
 
   @override
   Widget build(BuildContext context) {
     final color = isPositive ? AppColors.profit : AppColors.loss;
-    final icon = isPositive
-        ? Icons.trending_up_rounded
-        : Icons.trending_down_rounded;
+    final icon =
+        isPositive ? Icons.trending_up_rounded : Icons.trending_down_rounded;
 
     return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.3)),
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        border: Border.all(color: color.withOpacity(0.24)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -215,10 +157,7 @@ class _GrowthBadge extends StatelessWidget {
           Text(
             '${percent.abs().toStringAsFixed(1)}%',
             style: TextStyle(
-              color: color,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-            ),
+                color: color, fontSize: 12, fontWeight: FontWeight.w700),
           ),
         ],
       ),
@@ -226,33 +165,82 @@ class _GrowthBadge extends StatelessWidget {
   }
 }
 
-// ── Pill chip ─────────────────────────────────────────────────
-class _Chip extends StatelessWidget {
+class _Pill extends StatelessWidget {
   final IconData icon;
   final String label;
-  const _Chip({required this.icon, required this.label});
+
+  const _Pill({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Flexible(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.07),
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          border: Border.all(color: Colors.white.withOpacity(0.06)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: AppColors.textSecondary, size: 12),
+            const SizedBox(width: 5),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Metric extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+
+  const _Metric(
+      {required this.label, required this.value, required this.color});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
-        color: AppColors.bg3,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border),
+        color: Colors.white.withOpacity(0.055),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: Colors.white.withOpacity(0.06)),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: AppColors.textSecondary, size: 12),
-          const SizedBox(width: 5),
           Text(
             label,
             style: const TextStyle(
-              color: AppColors.textPrimary,
+              color: AppColors.textMuted,
               fontSize: 11,
               fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 5),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              style: TextStyle(
+                  color: color, fontSize: 14, fontWeight: FontWeight.w700),
             ),
           ),
         ],
@@ -261,7 +249,6 @@ class _Chip extends StatelessWidget {
   }
 }
 
-// ── Loading skeleton ─────────────────────────────────────────
 class _Skeleton extends StatelessWidget {
   const _Skeleton();
 
@@ -269,8 +256,8 @@ class _Skeleton extends StatelessWidget {
         width: w,
         height: h,
         decoration: BoxDecoration(
-          color: AppColors.bg3,
-          borderRadius: BorderRadius.circular(6),
+          color: Colors.white.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
         ),
       );
 
@@ -279,15 +266,17 @@ class _Skeleton extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _box(90, 12),
-        const SizedBox(height: 10),
-        _box(200, 32),
-        const SizedBox(height: 20),
-        Row(children: [
-          _box(80, 12),
-          const Spacer(),
-          _box(80, 12),
-        ]),
+        _box(120, 14),
+        const SizedBox(height: 12),
+        _box(220, 32),
+        const SizedBox(height: 22),
+        Row(
+          children: [
+            Expanded(child: _box(double.infinity, 60)),
+            const SizedBox(width: 12),
+            Expanded(child: _box(double.infinity, 60)),
+          ],
+        ),
       ],
     );
   }

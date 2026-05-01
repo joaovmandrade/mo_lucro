@@ -7,11 +7,7 @@ class TransactionTile extends StatelessWidget {
   final TransactionModel transaction;
   final VoidCallback? onDelete;
 
-  const TransactionTile({
-    super.key,
-    required this.transaction,
-    this.onDelete,
-  });
+  const TransactionTile({super.key, required this.transaction, this.onDelete});
 
   @override
   Widget build(BuildContext context) {
@@ -27,6 +23,7 @@ class TransactionTile extends StatelessWidget {
         color: AppColors.bg2,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.border),
+        boxShadow: AppShadows.card,
       ),
       child: Row(
         children: [
@@ -35,7 +32,7 @@ class TransactionTile extends StatelessWidget {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withOpacity(0.10),
               borderRadius: BorderRadius.circular(AppRadius.md),
               border: Border.all(color: color.withOpacity(0.2)),
             ),
@@ -102,15 +99,19 @@ class TransactionTile extends StatelessWidget {
         direction: DismissDirection.endToStart,
         onDismissed: (_) => onDelete!(),
         background: Container(
-          margin: const EdgeInsets.only(bottom: 8),
+          margin: const EdgeInsets.only(bottom: 10),
           decoration: BoxDecoration(
-            color: AppColors.loss.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(AppRadius.lg),
+            color: AppColors.loss.withOpacity(0.12),
+            borderRadius: BorderRadius.circular(AppRadius.xl),
             border: Border.all(color: AppColors.loss.withOpacity(0.25)),
           ),
           alignment: Alignment.centerRight,
           padding: const EdgeInsets.only(right: 20),
-          child: const Icon(Icons.delete_outline_rounded, color: AppColors.loss, size: 20),
+          child: const Icon(
+            Icons.delete_outline_rounded,
+            color: AppColors.loss,
+            size: 20,
+          ),
         ),
         child: tile,
       );
@@ -122,39 +123,64 @@ class TransactionTile extends StatelessWidget {
   IconData _categoryIcon(String category, bool isIncome) {
     if (isIncome) {
       switch (category) {
-        case 'salary':     return Icons.work_outline_rounded;
-        case 'investment': return Icons.trending_up_rounded;
-        case 'bonus':      return Icons.stars_rounded;
-        default:           return Icons.arrow_upward_rounded;
+        case 'salary':
+          return Icons.work_outline_rounded;
+        case 'investment':
+          return Icons.trending_up_rounded;
+        case 'bonus':
+          return Icons.stars_rounded;
+        default:
+          return Icons.arrow_upward_rounded;
       }
     }
     switch (category) {
-      case 'food':          return Icons.restaurant_outlined;
-      case 'transport':     return Icons.directions_car_outlined;
-      case 'health':        return Icons.local_hospital_outlined;
-      case 'education':     return Icons.school_outlined;
-      case 'entertainment': return Icons.movie_outlined;
-      case 'housing':       return Icons.home_outlined;
-      case 'utilities':     return Icons.bolt_outlined;
-      case 'shopping':      return Icons.shopping_bag_outlined;
-      default:              return Icons.receipt_long_outlined;
+      case 'food':
+        return Icons.restaurant_outlined;
+      case 'transport':
+        return Icons.directions_car_outlined;
+      case 'health':
+        return Icons.local_hospital_outlined;
+      case 'education':
+        return Icons.school_outlined;
+      case 'entertainment':
+        return Icons.movie_outlined;
+      case 'housing':
+        return Icons.home_outlined;
+      case 'utilities':
+        return Icons.bolt_outlined;
+      case 'shopping':
+        return Icons.shopping_bag_outlined;
+      default:
+        return Icons.receipt_long_outlined;
     }
   }
 
   String _categoryLabel(String category) {
     switch (category) {
-      case 'salary':        return 'Salário';
-      case 'investment':    return 'Investimento';
-      case 'bonus':         return 'Bônus';
-      case 'food':          return 'Alimentação';
-      case 'transport':     return 'Transporte';
-      case 'health':        return 'Saúde';
-      case 'education':     return 'Educação';
-      case 'entertainment': return 'Lazer';
-      case 'housing':       return 'Moradia';
-      case 'utilities':     return 'Utilidades';
-      case 'shopping':      return 'Compras';
-      default:              return 'Outros';
+      case 'salary':
+        return 'Salário';
+      case 'investment':
+        return 'Investimento';
+      case 'bonus':
+        return 'Bônus';
+      case 'food':
+        return 'Alimentação';
+      case 'transport':
+        return 'Transporte';
+      case 'health':
+        return 'Saúde';
+      case 'education':
+        return 'Educação';
+      case 'entertainment':
+        return 'Lazer';
+      case 'housing':
+        return 'Moradia';
+      case 'utilities':
+        return 'Utilidades';
+      case 'shopping':
+        return 'Compras';
+      default:
+        return 'Outros';
     }
   }
 }

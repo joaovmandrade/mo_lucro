@@ -35,19 +35,32 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Future<void> _loadData() async {
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final now = DateTime.now();
       final ops = await _opService.getOperations();
       final summary = await _txService.getMonthSummary(now.year, now.month);
-      if (mounted) setState(() { _operations = ops; _monthSummary = summary; _loading = false; });
+      if (mounted)
+        setState(() {
+          _operations = ops;
+          _monthSummary = summary;
+          _loading = false;
+        });
     } catch (e) {
-      if (mounted) setState(() { _error = e.toString(); _loading = false; });
+      if (mounted)
+        setState(() {
+          _error = e.toString();
+          _loading = false;
+        });
     }
   }
 
   Future<void> _push(Widget page) async {
-    final ok = await Navigator.push<bool>(context, MaterialPageRoute(builder: (_) => page));
+    final ok = await Navigator.push<bool>(
+        context, MaterialPageRoute(builder: (_) => page));
     if (ok == true) _loadData();
   }
 
@@ -115,8 +128,7 @@ class _DashboardPageState extends State<DashboardPage> {
                               color: AppColors.textPrimary)),
                       Text('Olá, $_username 👋',
                           style: const TextStyle(
-                              fontSize: 11,
-                              color: AppColors.textSecondary)),
+                              fontSize: 11, color: AppColors.textSecondary)),
                     ],
                   ),
                 ],
@@ -130,8 +142,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 IconButton(
                   icon: const Icon(Icons.logout_rounded,
                       color: AppColors.textSecondary, size: 22),
-                  onPressed: () =>
-                      Supabase.instance.client.auth.signOut(),
+                  onPressed: () => Supabase.instance.client.auth.signOut(),
                 ),
                 const SizedBox(width: 4),
               ],
@@ -153,8 +164,10 @@ class _DashboardPageState extends State<DashboardPage> {
                   // ── Ações Rápidas ────────────────────────────
                   _QuickActionsSection(
                     onAportar: () => _push(const AddOperationPage()),
-                    onReceita: () => _push(const AddTransactionPage(initialType: 'income')),
-                    onDespesa: () => _push(const AddTransactionPage(initialType: 'expense')),
+                    onReceita: () =>
+                        _push(const AddTransactionPage(initialType: 'income')),
+                    onDespesa: () =>
+                        _push(const AddTransactionPage(initialType: 'expense')),
                     onMeta: () => _push(const AddGoalPage()),
                   ),
                   const SizedBox(height: 24),
@@ -164,7 +177,8 @@ class _DashboardPageState extends State<DashboardPage> {
                   const SizedBox(height: 24),
 
                   // ── Distribuição ─────────────────────────────
-                  _SectionTitle(title: 'Distribuição', subtitle: 'por categoria'),
+                  _SectionTitle(
+                      title: 'Distribuição', subtitle: 'por categoria'),
                   const SizedBox(height: 14),
                   Container(
                     padding: const EdgeInsets.all(20),
@@ -195,7 +209,8 @@ class _DashboardPageState extends State<DashboardPage> {
                             style: TextButton.styleFrom(
                                 padding: EdgeInsets.zero,
                                 minimumSize: Size.zero,
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                                tapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap),
                             child: const Text('Ver detalhes',
                                 style: TextStyle(
                                     color: AppColors.primary,
@@ -208,9 +223,11 @@ class _DashboardPageState extends State<DashboardPage> {
 
                   if (_error != null)
                     _ErrorBanner(message: _error!)
-                  else if (_loading)
-                    ...[_SkeletonCard(), const SizedBox(height: 10), _SkeletonCard()]
-                  else if (portfolio.isEmpty)
+                  else if (_loading) ...[
+                    _SkeletonCard(),
+                    const SizedBox(height: 10),
+                    _SkeletonCard()
+                  ] else if (portfolio.isEmpty)
                     _EmptyState(onAdd: () => _push(const AddOperationPage()))
                   else
                     ...portfolio.values.map((pos) => AssetCard(position: pos)),
@@ -254,18 +271,36 @@ class _QuickActionsSection extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _QBtn(icon: Icons.add_chart_rounded, label: 'Aportar',
-                color: AppColors.accentBlue, onTap: onAportar),
-            _QBtn(icon: Icons.arrow_upward_rounded, label: 'Receita',
-                color: AppColors.accentGreen, onTap: onReceita),
-            _QBtn(icon: Icons.arrow_downward_rounded, label: 'Despesa',
-                color: AppColors.accentRed, onTap: onDespesa),
-            _QBtn(icon: Icons.flag_rounded, label: 'Meta',
-                color: AppColors.accentOrange, onTap: onMeta),
-            _QBtn(icon: Icons.newspaper_rounded, label: 'Notícias',
-                color: AppColors.accentTeal, onTap: () {}),
-            _QBtn(icon: Icons.calculate_rounded, label: 'Simulador',
-                color: AppColors.accentPurple, onTap: () {}),
+            _QBtn(
+                icon: Icons.add_chart_rounded,
+                label: 'Aportar',
+                color: AppColors.accentBlue,
+                onTap: onAportar),
+            _QBtn(
+                icon: Icons.arrow_upward_rounded,
+                label: 'Receita',
+                color: AppColors.accentGreen,
+                onTap: onReceita),
+            _QBtn(
+                icon: Icons.arrow_downward_rounded,
+                label: 'Despesa',
+                color: AppColors.accentRed,
+                onTap: onDespesa),
+            _QBtn(
+                icon: Icons.flag_rounded,
+                label: 'Meta',
+                color: AppColors.accentOrange,
+                onTap: onMeta),
+            _QBtn(
+                icon: Icons.newspaper_rounded,
+                label: 'Notícias',
+                color: AppColors.accentTeal,
+                onTap: () {}),
+            _QBtn(
+                icon: Icons.calculate_rounded,
+                label: 'Simulador',
+                color: AppColors.accentPurple,
+                onTap: () {}),
           ],
         ),
       ],
@@ -279,8 +314,11 @@ class _QBtn extends StatelessWidget {
   final Color color;
   final VoidCallback onTap;
 
-  const _QBtn({required this.icon, required this.label,
-      required this.color, required this.onTap});
+  const _QBtn(
+      {required this.icon,
+      required this.label,
+      required this.color,
+      required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -292,9 +330,9 @@ class _QBtn extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: color.withOpacity(0.25)),
+              color: color.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              border: Border.all(color: color.withOpacity(0.22)),
             ),
             child: Icon(icon, color: color, size: 22),
           ),
@@ -317,17 +355,18 @@ class _DicaCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
         color: AppColors.bg2,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.border),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 3, height: 42,
+            width: 3,
+            height: 42,
             decoration: BoxDecoration(
               color: AppColors.primary,
               borderRadius: BorderRadius.circular(2),
@@ -341,13 +380,17 @@ class _DicaCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: const [
                 Text('Dica do Dia',
-                    style: TextStyle(color: AppColors.warning,
-                        fontSize: 12, fontWeight: FontWeight.w700)),
+                    style: TextStyle(
+                        color: AppColors.warning,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700)),
                 SizedBox(height: 3),
                 Text(
                   'Reserve 6 meses de gastos como reserva de emergência antes de investir.',
-                  style: TextStyle(color: AppColors.textSecondary,
-                      fontSize: 12, height: 1.4),
+                  style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                      height: 1.4),
                 ),
               ],
             ),
@@ -365,7 +408,8 @@ class _SectionTitle extends StatelessWidget {
   final String subtitle;
   final Widget? action;
 
-  const _SectionTitle({required this.title, required this.subtitle, this.action});
+  const _SectionTitle(
+      {required this.title, required this.subtitle, this.action});
 
   @override
   Widget build(BuildContext context) {
@@ -423,8 +467,8 @@ class _EmptyState extends StatelessWidget {
             const Text(
               'Nenhum ativo ainda.\nAdicione sua primeira operação!',
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.textSecondary,
-                  fontSize: 14, height: 1.5),
+              style: TextStyle(
+                  color: AppColors.textSecondary, fontSize: 14, height: 1.5),
             ),
             const SizedBox(height: 16),
             Container(
@@ -435,8 +479,10 @@ class _EmptyState extends StatelessWidget {
                 border: Border.all(color: AppColors.primary.withOpacity(0.3)),
               ),
               child: const Text('Adicionar +',
-                  style: TextStyle(color: AppColors.primary,
-                      fontWeight: FontWeight.w700, fontSize: 13)),
+                  style: TextStyle(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13)),
             ),
           ],
         ),

@@ -19,12 +19,14 @@ Future<void> main() async {
     DeviceOrientation.portraitDown,
   ]);
 
-  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    statusBarColor: Colors.transparent,
-    statusBarIconBrightness: Brightness.light,
-    systemNavigationBarColor: Color(0xFF111827),
-    systemNavigationBarIconBrightness: Brightness.light,
-  ));
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+      systemNavigationBarColor: AppColors.bg0,
+      systemNavigationBarIconBrightness: Brightness.light,
+    ),
+  );
 
   await initializeDateFormatting('pt_BR', null);
 
@@ -66,8 +68,7 @@ class _AuthGate extends StatelessWidget {
     return StreamBuilder<AuthState>(
       stream: client.auth.onAuthStateChange,
       builder: (context, snapshot) {
-        final session =
-            snapshot.data?.session ?? client.auth.currentSession;
+        final session = snapshot.data?.session ?? client.auth.currentSession;
 
         if (snapshot.connectionState == ConnectionState.waiting &&
             session == null) {
@@ -103,10 +104,16 @@ class _AppShellState extends State<_AppShell> {
 
   static const _navItems = [
     _NavDef(Icons.home_outlined, Icons.home_rounded, 'Dashboard'),
-    _NavDef(Icons.pie_chart_outline_rounded, Icons.pie_chart_rounded,
-        'Portfólio'),
-    _NavDef(Icons.receipt_long_outlined, Icons.receipt_long_rounded,
-        'Transações'),
+    _NavDef(
+      Icons.pie_chart_outline_rounded,
+      Icons.pie_chart_rounded,
+      'Portfólio',
+    ),
+    _NavDef(
+      Icons.receipt_long_outlined,
+      Icons.receipt_long_rounded,
+      'Transações',
+    ),
     _NavDef(Icons.flag_outlined, Icons.flag_rounded, 'Metas'),
   ];
 
@@ -144,45 +151,64 @@ class _BottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.bg1,
-        border: Border(top: BorderSide(color: AppColors.border)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: SizedBox(
-          height: 60,
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+        child: Container(
+          height: 66,
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceGlass,
+            borderRadius: BorderRadius.circular(AppRadius.xl),
+            border: Border.all(color: AppColors.border),
+          ),
           child: Row(
             children: List.generate(items.length, (i) {
               final active = i == currentIndex;
               final color =
-                  active ? AppColors.primary : AppColors.textMuted;
+                  active ? AppColors.textPrimary : AppColors.textMuted;
               final item = items[i];
               return Expanded(
-                child: GestureDetector(
+                child: InkWell(
                   onTap: () => onTap(i),
-                  behavior: HitTestBehavior.opaque,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        active ? item.activeIcon : item.icon,
-                        color: color,
-                        size: 24,
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 220),
+                    curve: Curves.easeOutCubic,
+                    decoration: BoxDecoration(
+                      color: active
+                          ? AppColors.primary.withOpacity(0.12)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(AppRadius.xl),
+                      border: Border.all(
+                        color: active
+                            ? AppColors.primary.withOpacity(0.20)
+                            : Colors.transparent,
                       ),
-                      const SizedBox(height: 3),
-                      Text(
-                        item.label,
-                        style: TextStyle(
-                          color: color,
-                          fontSize: 10,
-                          fontWeight: active
-                              ? FontWeight.w700
-                              : FontWeight.w500,
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          active ? item.activeIcon : item.icon,
+                          color: active ? AppColors.primary : color,
+                          size: 22,
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 3),
+                        Text(
+                          item.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: color,
+                            fontSize: 10,
+                            fontWeight:
+                                active ? FontWeight.w700 : FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               );
@@ -211,11 +237,14 @@ class _SplashScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.circular(20),
+                gradient: AppColors.primaryGradient,
+                borderRadius: BorderRadius.circular(AppRadius.xl),
               ),
-              child: const Icon(Icons.trending_up_rounded,
-                  color: Colors.white, size: 36),
+              child: const Icon(
+                Icons.trending_up_rounded,
+                color: Colors.white,
+                size: 36,
+              ),
             ),
             const SizedBox(height: 20),
             const Text(
@@ -232,7 +261,9 @@ class _SplashScreen extends StatelessWidget {
               width: 22,
               height: 22,
               child: CircularProgressIndicator(
-                  color: AppColors.primary, strokeWidth: 2.5),
+                color: AppColors.primary,
+                strokeWidth: 2.5,
+              ),
             ),
           ],
         ),
@@ -258,22 +289,28 @@ class _StartupErrorApp extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.error_outline,
-                    color: AppColors.loss, size: 48),
+                const Icon(
+                  Icons.error_outline,
+                  color: AppColors.loss,
+                  size: 48,
+                ),
                 const SizedBox(height: 16),
                 const Text(
                   'Erro ao inicializar',
                   style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700),
+                    color: AppColors.textPrimary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 Text(
                   message,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                      color: AppColors.textSecondary, fontSize: 13),
+                    color: AppColors.textSecondary,
+                    fontSize: 13,
+                  ),
                 ),
               ],
             ),

@@ -7,11 +7,7 @@ class AssetCard extends StatelessWidget {
   final PortfolioPosition position;
   final VoidCallback? onDelete;
 
-  const AssetCard({
-    super.key,
-    required this.position,
-    this.onDelete,
-  });
+  const AssetCard({super.key, required this.position, this.onDelete});
 
   @override
   Widget build(BuildContext context) {
@@ -22,11 +18,12 @@ class AssetCard extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
       decoration: BoxDecoration(
-        color: AppColors.bg2,
-        borderRadius: BorderRadius.circular(16),
+        gradient: AppColors.cardGradient,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.border),
+        boxShadow: AppShadows.card,
       ),
       child: Column(
         children: [
@@ -45,12 +42,16 @@ class AssetCard extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Text(
-                          position.asset,
-                          style: const TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
+                        Flexible(
+                          child: Text(
+                            position.asset,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: AppColors.textPrimary,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -81,10 +82,11 @@ class AssetCard extends StatelessWidget {
                         width: 28,
                         height: 28,
                         decoration: BoxDecoration(
-                          color: AppColors.loss.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(8),
+                          color: AppColors.loss.withOpacity(0.10),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
                           border: Border.all(
-                              color: AppColors.loss.withOpacity(0.25)),
+                            color: AppColors.loss.withOpacity(0.25),
+                          ),
                         ),
                         child: const Icon(
                           Icons.delete_outline_rounded,
@@ -110,7 +112,7 @@ class AssetCard extends StatelessWidget {
           ),
 
           const SizedBox(height: 14),
-          Container(height: 1, color: AppColors.border),
+          Container(height: 1, color: Colors.white.withOpacity(0.08)),
           const SizedBox(height: 12),
 
           // ── Metrics ──────────────────────────────────────────
@@ -157,10 +159,14 @@ class _Avatar extends StatelessWidget {
 
   Color get _color {
     switch (category) {
-      case 'stocks': return AppColors.primary;
-      case 'crypto': return AppColors.warning;
-      case 'fixed_income': return AppColors.profit;
-      default: return AppColors.textSecondary;
+      case 'stocks':
+        return AppColors.primary;
+      case 'crypto':
+        return AppColors.warning;
+      case 'fixed_income':
+        return AppColors.profit;
+      default:
+        return AppColors.textSecondary;
     }
   }
 
@@ -170,9 +176,13 @@ class _Avatar extends StatelessWidget {
       width: 44,
       height: 44,
       decoration: BoxDecoration(
-        color: _color.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(13),
-        border: Border.all(color: _color.withOpacity(0.3)),
+        gradient: LinearGradient(
+          colors: [_color.withOpacity(0.24), _color.withOpacity(0.09)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: _color.withOpacity(0.28)),
       ),
       child: Center(
         child: Text(
@@ -195,19 +205,27 @@ class _CategoryTag extends StatelessWidget {
 
   Color get _color {
     switch (category) {
-      case 'stocks': return AppColors.primary;
-      case 'crypto': return AppColors.warning;
-      case 'fixed_income': return AppColors.profit;
-      default: return AppColors.textMuted;
+      case 'stocks':
+        return AppColors.primary;
+      case 'crypto':
+        return AppColors.warning;
+      case 'fixed_income':
+        return AppColors.profit;
+      default:
+        return AppColors.textMuted;
     }
   }
 
   String get _label {
     switch (category) {
-      case 'stocks': return 'Ações';
-      case 'crypto': return 'Cripto';
-      case 'fixed_income': return 'Renda Fixa';
-      default: return 'Outros';
+      case 'stocks':
+        return 'Ações';
+      case 'crypto':
+        return 'Cripto';
+      case 'fixed_income':
+        return 'Renda Fixa';
+      default:
+        return 'Outros';
     }
   }
 
@@ -217,7 +235,7 @@ class _CategoryTag extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
       decoration: BoxDecoration(
         color: _color.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
         border: Border.all(color: _color.withOpacity(0.25)),
       ),
       child: Text(
@@ -250,7 +268,9 @@ class _PnlBadge extends StatelessWidget {
       child: Text(
         '${isProfit ? '+' : ''}${AppFormatters.percentSimple(percent)}%',
         style: TextStyle(
-          color: color, fontSize: 11, fontWeight: FontWeight.w700,
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
         ),
       ),
     );
@@ -275,18 +295,24 @@ class _Metric extends StatelessWidget {
       child: Column(
         crossAxisAlignment: align,
         children: [
-          Text(label,
-              style: const TextStyle(
-                  color: AppColors.textMuted,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: 0.3)),
+          Text(
+            label,
+            style: const TextStyle(
+              color: AppColors.textMuted,
+              fontSize: 10,
+              fontWeight: FontWeight.w500,
+              letterSpacing: 0.3,
+            ),
+          ),
           const SizedBox(height: 3),
-          Text(value,
-              style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600)),
+          Text(
+            value,
+            style: const TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );
