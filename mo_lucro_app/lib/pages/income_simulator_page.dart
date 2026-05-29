@@ -55,123 +55,177 @@ class _IncomeSimulatorPageState extends State<IncomeSimulatorPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bg0,
-      appBar: AppBar(
-        backgroundColor: AppColors.bg0,
-        title: const Text('Simulador de Rendimento'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+      body: Column(
         children: [
-          // Input card
+          // ── Header azul gradiente ──────────────────────────────
           Container(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF0F1D3B), Color(0xFF111827)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+            decoration: const BoxDecoration(
+              gradient: AppColors.headerGradient,
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(28),
+                bottomRight: Radius.circular(28),
               ),
-              borderRadius: BorderRadius.circular(AppRadius.xxl),
-              border: Border.all(color: AppColors.primary.withOpacity(0.2)),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.13),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.white.withOpacity(0.18)),
+                  ),
+                  child: Row(
+                    children: [
+                      // Botão voltar
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.18),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.arrow_back_ios_new,
+                            size: 16,
+                            color: AppColors.textOnBlue,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      // Título
+                      const Expanded(
+                        child: Text(
+                          'Simulador de Rendimento',
+                          style: TextStyle(
+                            color: AppColors.textOnBlue,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // ── Corpo scrollável ───────────────────────────────────
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.all(AppSpacing.lg),
               children: [
+                // Input card — branco com borda e sombra
+                Container(
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  decoration: BoxDecoration(
+                    color: AppColors.bg1,
+                    borderRadius: BorderRadius.circular(AppRadius.xxl),
+                    border: Border.all(color: AppColors.border),
+                    boxShadow: AppShadows.card,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Dados da Simulação',
+                        style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 16),
+                      _InputRow(
+                        label: 'Investimento Inicial',
+                        ctrl: _initialCtrl,
+                        prefix: 'R\$ ',
+                        onChanged: (_) => setState(() {}),
+                      ),
+                      const SizedBox(height: 12),
+                      _InputRow(
+                        label: 'Aporte Mensal',
+                        ctrl: _monthlyCtrl,
+                        prefix: 'R\$ ',
+                        onChanged: (_) => setState(() {}),
+                      ),
+                      const SizedBox(height: 12),
+                      _InputRow(
+                        label: 'Período (meses)',
+                        ctrl: _periodCtrl,
+                        suffix: 'meses',
+                        onChanged: (_) => setState(() {}),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Summary
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.base, vertical: AppSpacing.md),
+                  decoration: BoxDecoration(
+                    color: AppColors.accent.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                    border: Border.all(color: AppColors.accent.withOpacity(0.2)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _StatBox(
+                        label: 'Total Investido',
+                        value: AppFormatters.currency(_initial + _monthly * _period),
+                        color: AppColors.textSecondary,
+                      ),
+                      Container(width: 1, height: 32, color: AppColors.border),
+                      _StatBox(
+                        label: 'Período',
+                        value: '$_period meses',
+                        color: AppColors.primary,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Comparison table header
                 const Text(
-                  'Dados da Simulação',
+                  'Comparação entre Bancos',
                   style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 16),
-                _InputRow(
-                  label: 'Investimento Inicial',
-                  ctrl: _initialCtrl,
-                  prefix: 'R\$ ',
-                  onChanged: (_) => setState(() {}),
+                    color: AppColors.textPrimary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 const SizedBox(height: 12),
-                _InputRow(
-                  label: 'Aporte Mensal',
-                  ctrl: _monthlyCtrl,
-                  prefix: 'R\$ ',
-                  onChanged: (_) => setState(() {}),
+
+                // Bank rows
+                ..._banks.map((bank) {
+                  final finalVal = _calcFinal(bank.annualRate);
+                  final ret = _calcReturn(bank.annualRate);
+                  return _BankRow(
+                    bank: bank,
+                    finalValue: finalVal,
+                    returnValue: ret,
+                  );
+                }),
+
+                const SizedBox(height: 24),
+                const Text(
+                  '* Simulação simplificada baseada em taxa anual fixa. Rendimentos reais '
+                  'variam conforme a taxa Selic e condições de cada banco.',
+                  style: TextStyle(
+                      color: AppColors.textMuted, fontSize: 11, height: 1.5),
                 ),
-                const SizedBox(height: 12),
-                _InputRow(
-                  label: 'Período (meses)',
-                  ctrl: _periodCtrl,
-                  suffix: 'meses',
-                  onChanged: (_) => setState(() {}),
-                ),
+                const SizedBox(height: 40),
               ],
             ),
           ),
-          const SizedBox(height: 20),
-
-          // Summary
-          Container(
-            padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.base, vertical: AppSpacing.md),
-            decoration: BoxDecoration(
-              color: AppColors.accent.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(AppRadius.md),
-              border: Border.all(color: AppColors.accent.withOpacity(0.2)),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _StatBox(
-                  label: 'Total Investido',
-                  value: AppFormatters.currency(_initial + _monthly * _period),
-                  color: AppColors.textSecondary,
-                ),
-                Container(width: 1, height: 32, color: AppColors.border),
-                _StatBox(
-                  label: 'Período',
-                  value: '$_period meses',
-                  color: AppColors.primary,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // Comparison table header
-          const Text(
-            'Comparação entre Bancos',
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // Bank rows
-          ..._banks.map((bank) {
-            final finalVal = _calcFinal(bank.annualRate);
-            final ret = _calcReturn(bank.annualRate);
-            return _BankRow(
-              bank: bank,
-              finalValue: finalVal,
-              returnValue: ret,
-            );
-          }),
-
-          const SizedBox(height: 24),
-          const Text(
-            '* Simulação simplificada baseada em taxa anual fixa. Rendimentos reais '
-            'variam conforme a taxa Selic e condições de cada banco.',
-            style: TextStyle(
-                color: AppColors.textMuted, fontSize: 11, height: 1.5),
-          ),
-          const SizedBox(height: 40),
         ],
       ),
     );

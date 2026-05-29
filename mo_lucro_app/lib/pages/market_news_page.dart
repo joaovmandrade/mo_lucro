@@ -61,28 +61,85 @@ class _MarketNewsPageState extends State<MarketNewsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bg0,
-      appBar: AppBar(
-        backgroundColor: AppColors.bg0,
-        elevation: 0,
-        title: const Text('Notícias do Mercado',
-            style: TextStyle(color: AppColors.textPrimary,
-                fontSize: 18, fontWeight: FontWeight.w700)),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new,
-              size: 18, color: AppColors.textSecondary),
-          onPressed: () => Navigator.pop(context),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded,
-                size: 20, color: AppColors.textSecondary),
-            onPressed: () => _load(),
-          ),
-        ],
-      ),
       body: Column(
         children: [
+          // ── Header azul gradiente ──────────────────────────────
+          Container(
+            decoration: const BoxDecoration(
+              gradient: AppColors.headerGradient,
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(28),
+                bottomRight: Radius.circular(28),
+              ),
+            ),
+            child: SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.13),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.white.withOpacity(0.18)),
+                  ),
+                  child: Row(
+                    children: [
+                      // Botão voltar
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.18),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.arrow_back_ios_new,
+                            size: 16,
+                            color: AppColors.textOnBlue,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      // Título
+                      const Expanded(
+                        child: Text(
+                          'Notícias do Mercado',
+                          style: TextStyle(
+                            color: AppColors.textOnBlue,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      // Botão refresh
+                      GestureDetector(
+                        onTap: () => _load(),
+                        child: Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.18),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.refresh_rounded,
+                            size: 18,
+                            color: AppColors.textOnBlue,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
           // ── Category filter chips ──────────────────────────────
+          const SizedBox(height: 12),
           SizedBox(
             height: 44,
             child: ListView(
@@ -191,10 +248,7 @@ class _FeaturedCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.lg),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF0F1D3B), Color(0xFF192B52)],
-            begin: Alignment.topLeft, end: Alignment.bottomRight,
-          ),
+          gradient: AppColors.primaryGradient,
           borderRadius: BorderRadius.circular(AppRadius.xxl),
           border: Border.all(color: AppColors.primary.withOpacity(0.3)),
         ),
@@ -203,37 +257,37 @@ class _FeaturedCard extends StatelessWidget {
           children: [
             Row(children: [
               if (item.ticker != null) ...[
-                _NewsTag(label: item.ticker!, color: AppColors.primary),
+                _NewsTag(label: item.ticker!, color: Colors.white),
                 const SizedBox(width: 6),
               ],
-              _NewsTag(label: _catLabel(item.category), color: AppColors.accent),
+              _NewsTag(label: _catLabel(item.category), color: Colors.white),
               const Spacer(),
               Text(item.timeAgo,
-                  style: const TextStyle(color: AppColors.textMuted, fontSize: 11)),
+                  style: const TextStyle(color: AppColors.textOnBlueDim, fontSize: 11)),
             ]),
             const SizedBox(height: 10),
             Text(item.headline,
                 style: const TextStyle(
-                    color: AppColors.textPrimary, fontSize: 16,
+                    color: AppColors.textOnBlue, fontSize: 16,
                     fontWeight: FontWeight.w700, height: 1.4)),
             const SizedBox(height: 6),
             Text(item.sub,
-                style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                style: const TextStyle(color: AppColors.textOnBlueDim, fontSize: 13),
                 maxLines: 2, overflow: TextOverflow.ellipsis),
             const SizedBox(height: 12),
             Row(children: [
               if (item.source != null) ...[
-                const Icon(Icons.public_rounded, color: AppColors.textMuted, size: 12),
+                const Icon(Icons.public_rounded, color: AppColors.textOnBlueDim, size: 12),
                 const SizedBox(width: 4),
                 Text(item.source!,
-                    style: const TextStyle(color: AppColors.textMuted, fontSize: 11)),
+                    style: const TextStyle(color: AppColors.textOnBlueDim, fontSize: 11)),
                 const Spacer(),
               ] else const Spacer(),
               const Text('Ler mais',
-                  style: TextStyle(color: AppColors.primary, fontSize: 12,
+                  style: TextStyle(color: AppColors.textOnBlue, fontSize: 12,
                       fontWeight: FontWeight.w700)),
               const SizedBox(width: 4),
-              const Icon(Icons.arrow_forward_rounded, color: AppColors.primary, size: 14),
+              const Icon(Icons.arrow_forward_rounded, color: AppColors.textOnBlue, size: 14),
             ]),
           ],
         ),

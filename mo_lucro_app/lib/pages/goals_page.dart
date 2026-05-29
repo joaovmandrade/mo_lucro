@@ -46,9 +46,11 @@ class _GoalsPageState extends State<GoalsPage> {
         builder: (ctx) => AlertDialog(
           backgroundColor: AppColors.bg2,
           title: const Text('Excluir meta',
-              style: TextStyle(color: AppColors.textPrimary, fontSize: 17)),
-          content: const Text(
-              'Tem certeza que deseja excluir esta meta?',
+              style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700)),
+          content: const Text('Tem certeza que deseja excluir esta meta?',
               style: TextStyle(color: AppColors.textSecondary)),
           actions: [
             TextButton(
@@ -74,7 +76,8 @@ class _GoalsPageState extends State<GoalsPage> {
         title: Text(
           'Adicionar valor à "${goal.title}"',
           style: const TextStyle(
-              color: AppColors.textPrimary, fontSize: 15,
+              color: AppColors.textPrimary,
+              fontSize: 15,
               fontWeight: FontWeight.w700),
         ),
         content: Column(
@@ -83,13 +86,15 @@ class _GoalsPageState extends State<GoalsPage> {
           children: [
             Text(
               'Progresso atual: ${goal.progressPercent.toStringAsFixed(1)}%',
-              style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
+              style: const TextStyle(
+                  color: AppColors.textMuted, fontSize: 12),
             ),
             const SizedBox(height: 14),
             TextField(
               controller: ctrl,
               autofocus: true,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
               style: const TextStyle(
                   color: AppColors.textPrimary,
                   fontWeight: FontWeight.w700,
@@ -98,7 +103,8 @@ class _GoalsPageState extends State<GoalsPage> {
                 hintText: '0,00',
                 prefixText: 'R\$ ',
                 prefixStyle: const TextStyle(
-                    color: AppColors.warning, fontWeight: FontWeight.w700),
+                    color: AppColors.warning,
+                    fontWeight: FontWeight.w700),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppRadius.md),
                   borderSide: const BorderSide(color: AppColors.border),
@@ -127,7 +133,8 @@ class _GoalsPageState extends State<GoalsPage> {
           ),
           ElevatedButton(
             onPressed: () {
-              final v = double.tryParse(ctrl.text.replaceAll(',', '.'));
+              final v =
+                  double.tryParse(ctrl.text.replaceAll(',', '.'));
               Navigator.pop(ctx, v);
             },
             style: ElevatedButton.styleFrom(
@@ -154,7 +161,8 @@ class _GoalsPageState extends State<GoalsPage> {
     final completed = _goals.where((g) => g.isCompleted).length;
     final totalTarget = _goals.fold(0.0, (s, g) => s + g.targetValue);
     final totalCurrent = _goals.fold(0.0, (s, g) => s + g.currentValue);
-    final overallProgress = totalTarget > 0 ? totalCurrent / totalTarget : 0.0;
+    final overallProgress =
+        totalTarget > 0 ? totalCurrent / totalTarget : 0.0;
 
     return Scaffold(
       backgroundColor: AppColors.bg0,
@@ -171,182 +179,331 @@ class _GoalsPageState extends State<GoalsPage> {
       ),
       body: RefreshIndicator(
         color: AppColors.primary,
-        backgroundColor: AppColors.bg2,
+        backgroundColor: AppColors.bg1,
         onRefresh: _load,
         child: CustomScrollView(
           slivers: [
-            SliverAppBar(
-              floating: true,
-              snap: true,
-              backgroundColor: AppColors.bg0,
-              title: const Text('Metas'),
+            // ── Blue gradient header ──────────────────────
+            SliverToBoxAdapter(
+              child: _GoalsHeader(
+                totalGoals: _goals.length,
+                completed: completed,
+                totalCurrent: totalCurrent,
+                totalTarget: totalTarget,
+                overallProgress: overallProgress,
+                isLoading: _loading,
+              ),
             ),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate([
-                  // Overview card
-                  if (_goals.isNotEmpty) ...[
-                    Container(
-                      padding: const EdgeInsets.all(AppSpacing.lg),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF1A2B1A), Color(0xFF111827)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(AppRadius.xxl),
-                        border: Border.all(
-                            color: AppColors.warning.withOpacity(0.3)),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text(
-                                'Progresso Geral',
-                                style: TextStyle(
-                                    color: AppColors.textSecondary,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: AppColors.warning.withOpacity(0.12),
-                                  borderRadius:
-                                      BorderRadius.circular(AppRadius.pill),
-                                ),
-                                child: Text(
-                                  '$completed de ${_goals.length} concluídas',
-                                  style: const TextStyle(
-                                      color: AppColors.warning,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 14),
 
-                          // Gradient progress bar
-                          Stack(children: [
+            // ── Goal list ─────────────────────────────────
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 100),
+              sliver: _loading
+                  ? const SliverToBoxAdapter(
+                      child: Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(40),
+                          child: CircularProgressIndicator(
+                              color: AppColors.primary, strokeWidth: 2),
+                        ),
+                      ),
+                    )
+                  : _goals.isEmpty
+                      ? SliverToBoxAdapter(child: _EmptyState())
+                      : SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (ctx, i) => GoalCard(
+                              goal: _goals[i],
+                              onAddProgress: () =>
+                                  _addProgress(_goals[i]),
+                              onDelete: () => _delete(_goals[i].id),
+                            ),
+                            childCount: _goals.length,
+                          ),
+                        ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Blue Header
+// ─────────────────────────────────────────────────────────────
+class _GoalsHeader extends StatelessWidget {
+  final int totalGoals;
+  final int completed;
+  final double totalCurrent;
+  final double totalTarget;
+  final double overallProgress;
+  final bool isLoading;
+
+  const _GoalsHeader({
+    required this.totalGoals,
+    required this.completed,
+    required this.totalCurrent,
+    required this.totalTarget,
+    required this.overallProgress,
+    required this.isLoading,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: AppColors.headerGradient,
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(28),
+          bottomRight: Radius.circular(28),
+        ),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Top bar
+              Row(
+                children: [
+                  const Text(
+                    'Minhas Metas',
+                    style: TextStyle(
+                      color: AppColors.textOnBlue,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const Spacer(),
+                  if (totalGoals > 0)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                        border: Border.all(
+                            color: Colors.white.withOpacity(0.20)),
+                      ),
+                      child: Text(
+                        '$completed de $totalGoals concluídas',
+                        style: const TextStyle(
+                          color: AppColors.textOnBlue,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              // Progress card (only if there are goals)
+              if (!isLoading && totalGoals > 0) ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.13),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                        color: Colors.white.withOpacity(0.18)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Progresso Geral',
+                            style: TextStyle(
+                              color: AppColors.textOnBlueDim,
+                              fontSize: 13,
+                            ),
+                          ),
+                          Text(
+                            '${(overallProgress * 100).toStringAsFixed(1)}%',
+                            style: const TextStyle(
+                              color: AppColors.textOnBlue,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Progress bar
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                        child: Stack(
+                          children: [
                             Container(
-                              height: 10,
-                              decoration: BoxDecoration(
-                                color: AppColors.bg4,
-                                borderRadius:
-                                    BorderRadius.circular(AppRadius.pill),
-                              ),
+                              height: 8,
+                              color: Colors.white.withOpacity(0.18),
                             ),
                             FractionallySizedBox(
                               widthFactor: overallProgress.clamp(0.0, 1.0),
                               child: Container(
-                                height: 10,
+                                height: 8,
                                 decoration: BoxDecoration(
-                                  gradient: const LinearGradient(colors: [
-                                    AppColors.warning,
-                                    Color(0xFFFF9500),
-                                  ]),
-                                  borderRadius:
-                                      BorderRadius.circular(AppRadius.pill),
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      AppColors.warning,
+                                      const Color(0xFFFBBF24),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(
+                                      AppRadius.pill),
                                 ),
                               ),
                             ),
-                          ]),
-                          const SizedBox(height: 10),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              const Text(
+                                'Acumulado',
+                                style: TextStyle(
+                                  color: AppColors.textOnBlueDim,
+                                  fontSize: 11,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
                               Text(
                                 AppFormatters.currency(totalCurrent),
                                 style: const TextStyle(
-                                    color: AppColors.warning,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700),
+                                  color: AppColors.textOnBlue,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
-                              Text(
-                                '${(overallProgress * 100).toStringAsFixed(1)}%',
-                                style: const TextStyle(
-                                    color: AppColors.textSecondary,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600),
+                            ],
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              const Text(
+                                'Objetivo total',
+                                style: TextStyle(
+                                  color: AppColors.textOnBlueDim,
+                                  fontSize: 11,
+                                ),
                               ),
+                              const SizedBox(height: 2),
                               Text(
                                 AppFormatters.currency(totalTarget),
                                 style: const TextStyle(
-                                    color: AppColors.textMuted,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600),
+                                  color: AppColors.textOnBlueDim,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ],
                           ),
                         ],
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                  ],
-
-                  // Goal list
-                  if (_loading)
-                    const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(40),
-                        child: CircularProgressIndicator(
-                            color: AppColors.primary, strokeWidth: 2),
-                      ),
-                    )
-                  else if (_goals.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 48),
-                      child: Column(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              color: AppColors.warning.withOpacity(0.1),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.flag_outlined,
-                                color: AppColors.warning, size: 40),
+                    ],
+                  ),
+                ),
+              ] else if (isLoading) ...[
+                Container(
+                  height: 110,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+              ] else ...[
+                // Empty state hint in header
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.13),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                        color: Colors.white.withOpacity(0.18)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.lightbulb_outline_rounded,
+                          color: AppColors.textOnBlueDim, size: 18),
+                      const SizedBox(width: 10),
+                      const Expanded(
+                        child: Text(
+                          'Defina metas financeiras e acompanhe seu progresso.',
+                          style: TextStyle(
+                            color: AppColors.textOnBlueDim,
+                            fontSize: 13,
+                            height: 1.4,
                           ),
-                          const SizedBox(height: 16),
-                          const Text(
-                            'Nenhuma meta ainda',
-                            style: TextStyle(
-                                color: AppColors.textPrimary,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700),
-                          ),
-                          const SizedBox(height: 6),
-                          const Text(
-                            'Crie sua primeira meta financeira\ne acompanhe seu progresso!',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                                color: AppColors.textSecondary,
-                                fontSize: 13,
-                                height: 1.5),
-                          ),
-                        ],
+                        ),
                       ),
-                    )
-                  else
-                    ..._goals.map(
-                      (goal) => GoalCard(
-                        goal: goal,
-                        onAddProgress: () => _addProgress(goal),
-                        onDelete: () => _delete(goal.id),
-                      ),
-                    ),
-                ]),
-              ),
-            ),
-          ],
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
         ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Empty State
+// ─────────────────────────────────────────────────────────────
+class _EmptyState extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 40),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(22),
+            decoration: BoxDecoration(
+              color: AppColors.warning.withOpacity(0.08),
+              shape: BoxShape.circle,
+              border: Border.all(
+                  color: AppColors.warning.withOpacity(0.18)),
+            ),
+            child: const Icon(Icons.flag_outlined,
+                color: AppColors.warning, size: 36),
+          ),
+          const SizedBox(height: 18),
+          const Text(
+            'Nenhuma meta ainda',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Crie sua primeira meta financeira\ne acompanhe seu progresso!',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 13,
+              height: 1.5,
+            ),
+          ),
+        ],
       ),
     );
   }

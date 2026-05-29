@@ -41,7 +41,9 @@ class _TransactionsPageState extends State<TransactionsPage> {
     _load();
   }
 
-  void _prevMonth() => setState(() => _month = DateTime(_month.year, _month.month - 1));
+  void _prevMonth() =>
+      setState(() => _month = DateTime(_month.year, _month.month - 1));
+
   void _nextMonth() {
     final next = DateTime(_month.year, _month.month + 1);
     if (next.isBefore(DateTime.now().add(const Duration(days: 31)))) {
@@ -101,117 +103,26 @@ class _TransactionsPageState extends State<TransactionsPage> {
         onRefresh: _load,
         child: CustomScrollView(
           slivers: [
-            SliverAppBar(
-              floating: true,
-              snap: true,
-              backgroundColor: AppColors.bg0,
-              title: const Text('Transações'),
+            // ── Blue gradient header ─────────────────────────
+            SliverToBoxAdapter(
+              child: _TransactionsHeader(
+                month: _month,
+                income: _monthIncome,
+                expense: _monthExpense,
+                net: net,
+                isPositiveNet: isPositiveNet,
+                isLoading: _loading,
+                onPrevMonth: _prevMonth,
+                onNextMonth: _nextMonth,
+              ),
             ),
+
+            // ── White body ───────────────────────────────────
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 100),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
-                  // Month selector
-                  Container(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.chevron_left_rounded,
-                              color: AppColors.textSecondary),
-                          onPressed: _prevMonth,
-                        ),
-                        Text(
-                          AppFormatters.month(_month),
-                          style: const TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.chevron_right_rounded,
-                              color: AppColors.textSecondary),
-                          onPressed: _nextMonth,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-
-                  // Summary cards
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _SummaryCard(
-                          label: 'Receitas',
-                          value: AppFormatters.currency(_monthIncome),
-                          color: AppColors.profit,
-                          icon: Icons.arrow_upward_rounded,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _SummaryCard(
-                          label: 'Despesas',
-                          value: AppFormatters.currency(_monthExpense),
-                          color: AppColors.loss,
-                          icon: Icons.arrow_downward_rounded,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-
-                  // Net balance
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: (isPositiveNet ? AppColors.profit : AppColors.loss)
-                          .withOpacity(0.06),
-                      borderRadius: BorderRadius.circular(AppRadius.lg),
-                      border: Border.all(
-                        color: (isPositiveNet ? AppColors.profit : AppColors.loss)
-                            .withOpacity(0.2),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(children: [
-                          Icon(
-                            isPositiveNet
-                                ? Icons.trending_up_rounded
-                                : Icons.trending_down_rounded,
-                            color: isPositiveNet ? AppColors.profit : AppColors.loss,
-                            size: 16,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            'Saldo do mês',
-                            style: TextStyle(
-                              color: isPositiveNet ? AppColors.profit : AppColors.loss,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ]),
-                        Text(
-                          '${isPositiveNet ? '+' : ''} ${AppFormatters.currency(net)}',
-                          style: TextStyle(
-                            color: isPositiveNet ? AppColors.profit : AppColors.loss,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Filter chips
+                  // ── Filter chips ────────────────────────────
                   Row(
                     children: [
                       _FilterChip(
@@ -237,7 +148,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                   ),
                   const SizedBox(height: 16),
 
-                  // List (grouped by date)
+                  // ── List (grouped by date) ───────────────────
                   if (_loading)
                     const Center(
                       child: Padding(
@@ -260,32 +171,34 @@ class _TransactionsPageState extends State<TransactionsPage> {
                                 : 'Nenhum registro nesta categoria',
                             textAlign: TextAlign.center,
                             style: const TextStyle(
-                                color: AppColors.textSecondary, fontSize: 14),
+                                color: AppColors.textSecondary,
+                                fontSize: 14),
                           ),
                         ],
                       ),
                     )
                   else
                     ...groups.entries.expand((entry) => [
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 8, top: 4),
-                        child: Text(
-                          entry.key,
-                          style: const TextStyle(
-                            color: AppColors.textMuted,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.3,
+                          Padding(
+                            padding:
+                                const EdgeInsets.only(bottom: 8, top: 4),
+                            child: Text(
+                              entry.key,
+                              style: const TextStyle(
+                                color: AppColors.textMuted,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.3,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                      ...entry.value.map(
-                        (t) => TransactionTile(
-                          transaction: t,
-                          onDelete: () => _delete(t.id),
-                        ),
-                      ),
-                    ]),
+                          ...entry.value.map(
+                            (t) => TransactionTile(
+                              transaction: t,
+                              onDelete: () => _delete(t.id),
+                            ),
+                          ),
+                        ]),
                 ]),
               ),
             ),
@@ -296,48 +209,312 @@ class _TransactionsPageState extends State<TransactionsPage> {
   }
 }
 
-class _SummaryCard extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color color;
-  final IconData icon;
+// ─────────────────────────────────────────────────────────────
+// Blue Header
+// ─────────────────────────────────────────────────────────────
+class _TransactionsHeader extends StatelessWidget {
+  final DateTime month;
+  final double income;
+  final double expense;
+  final double net;
+  final bool isPositiveNet;
+  final bool isLoading;
+  final VoidCallback onPrevMonth;
+  final VoidCallback onNextMonth;
 
-  const _SummaryCard({
-    required this.label,
-    required this.value,
-    required this.color,
-    required this.icon,
+  const _TransactionsHeader({
+    required this.month,
+    required this.income,
+    required this.expense,
+    required this.net,
+    required this.isPositiveNet,
+    required this.isLoading,
+    required this.onPrevMonth,
+    required this.onNextMonth,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.base),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.07),
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: color.withOpacity(0.2)),
+      decoration: const BoxDecoration(
+        gradient: AppColors.headerGradient,
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(28),
+          bottomRight: Radius.circular(28),
+        ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(children: [
-            Icon(icon, color: color, size: 15),
-            const SizedBox(width: 5),
-            Text(label,
-                style: TextStyle(
-                    color: color, fontSize: 12, fontWeight: FontWeight.w600)),
-          ]),
-          const SizedBox(height: 8),
-          Text(value,
-              style: TextStyle(
-                  color: color, fontSize: 16, fontWeight: FontWeight.w800)),
-        ],
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Top bar with title + month navigator ──────
+              Row(
+                children: [
+                  const Text(
+                    'Transações',
+                    style: TextStyle(
+                      color: AppColors.textOnBlue,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const Spacer(),
+                  // Month navigator
+                  Row(
+                    children: [
+                      GestureDetector(
+                        onTap: onPrevMonth,
+                        child: Container(
+                          width: 34,
+                          height: 34,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.15),
+                            borderRadius:
+                                BorderRadius.circular(AppRadius.pill),
+                            border: Border.all(
+                                color: Colors.white.withOpacity(0.20)),
+                          ),
+                          child: const Icon(Icons.chevron_left_rounded,
+                              color: Colors.white, size: 18),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        AppFormatters.month(month),
+                        style: const TextStyle(
+                          color: AppColors.textOnBlue,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      GestureDetector(
+                        onTap: onNextMonth,
+                        child: Container(
+                          width: 34,
+                          height: 34,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.15),
+                            borderRadius:
+                                BorderRadius.circular(AppRadius.pill),
+                            border: Border.all(
+                                color: Colors.white.withOpacity(0.20)),
+                          ),
+                          child: const Icon(Icons.chevron_right_rounded,
+                              color: Colors.white, size: 18),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              // ── Summary glass card ───────────────────────
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.13),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                      color: Colors.white.withOpacity(0.18)),
+                ),
+                child: isLoading
+                    ? _HeaderSkeleton()
+                    : _HeaderSummaryBody(
+                        income: income,
+                        expense: expense,
+                        net: net,
+                        isPositiveNet: isPositiveNet,
+                      ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 }
 
+class _HeaderSummaryBody extends StatelessWidget {
+  final double income;
+  final double expense;
+  final double net;
+  final bool isPositiveNet;
+
+  const _HeaderSummaryBody({
+    required this.income,
+    required this.expense,
+    required this.net,
+    required this.isPositiveNet,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            // Receitas
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: const [
+                      Icon(Icons.arrow_upward_rounded,
+                          color: Color(0xFF6EE7B7), size: 13),
+                      SizedBox(width: 4),
+                      Text(
+                        'Receitas',
+                        style: TextStyle(
+                          color: AppColors.textOnBlueDim,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      AppFormatters.currency(income),
+                      style: const TextStyle(
+                        color: Color(0xFF6EE7B7),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Divider
+            Container(
+              width: 1,
+              height: 36,
+              color: Colors.white.withOpacity(0.18),
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+            ),
+            // Despesas
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: const [
+                      Icon(Icons.arrow_downward_rounded,
+                          color: Color(0xFFFCA5A5), size: 13),
+                      SizedBox(width: 4),
+                      Text(
+                        'Despesas',
+                        style: TextStyle(
+                          color: AppColors.textOnBlueDim,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      AppFormatters.currency(expense),
+                      style: const TextStyle(
+                        color: Color(0xFFFCA5A5),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        // Divider
+        Container(height: 1, color: Colors.white.withOpacity(0.15)),
+        const SizedBox(height: 14),
+        // Saldo
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(children: [
+              Icon(
+                isPositiveNet
+                    ? Icons.trending_up_rounded
+                    : Icons.trending_down_rounded,
+                color: AppColors.textOnBlueDim,
+                size: 15,
+              ),
+              const SizedBox(width: 6),
+              const Text(
+                'Saldo do mês',
+                style: TextStyle(
+                  color: AppColors.textOnBlueDim,
+                  fontSize: 13,
+                ),
+              ),
+            ]),
+            Text(
+              '${isPositiveNet ? '+' : ''}${AppFormatters.currency(net)}',
+              style: TextStyle(
+                color: isPositiveNet
+                    ? const Color(0xFF6EE7B7)
+                    : const Color(0xFFFCA5A5),
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _HeaderSkeleton extends StatelessWidget {
+  Widget _box(double w, double h) => Container(
+        width: w,
+        height: h,
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.10),
+          borderRadius: BorderRadius.circular(6),
+        ),
+      );
+
+  @override
+  Widget build(BuildContext context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            _box(90, 32),
+            const SizedBox(width: 16),
+            _box(90, 32),
+          ]),
+          const SizedBox(height: 14),
+          _box(double.infinity, 1),
+          const SizedBox(height: 14),
+          Row(children: [
+            _box(90, 13),
+            const Spacer(),
+            _box(80, 15),
+          ]),
+        ],
+      );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Filter Chip
+// ─────────────────────────────────────────────────────────────
 class _FilterChip extends StatelessWidget {
   final String label;
   final String value;
@@ -362,9 +539,10 @@ class _FilterChip extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? c.withOpacity(0.12) : AppColors.bg2,
+          color: isSelected ? c.withOpacity(0.12) : AppColors.bg1,
           borderRadius: BorderRadius.circular(AppRadius.pill),
           border: Border.all(
               color: isSelected ? c : AppColors.border,
