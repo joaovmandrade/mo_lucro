@@ -20,32 +20,31 @@ Map<String, PortfolioPosition> calculatePortfolio(
     final pos = mutable[op.asset]!;
 
     if (op.type == 'buy') {
-      final newQty = pos.quantity + op.quantity;
-      final newTotal = pos.totalInvested + op.total;
-      pos.quantity = newQty;
-      pos.totalInvested = newTotal;
+      pos.quantity += op.quantity;
+      pos.totalInvested += op.total;
     } else if (op.type == 'sell') {
-      if (pos.quantity > 0) {
-        final avgPrice = pos.totalInvested / pos.quantity;
-        pos.quantity = (pos.quantity - op.quantity).clamp(0, double.infinity);
-        pos.totalInvested =
-            (pos.totalInvested - (avgPrice * op.quantity)).clamp(0, double.infinity);
-      }
+      // Use current avg price when a position exists, otherwise use the sell price
+      final avgPrice = pos.quantity > 0
+          ? pos.totalInvested / pos.quantity
+          : op.price;
+      pos.quantity -= op.quantity;
+      pos.totalInvested -= avgPrice * op.quantity;
+      // No clamp — allows negative (short/oversell) to be reflected
     }
   }
 
-  // Build immutable result, filtering out zeroed positions
+  // Include all positions with meaningful quantity (positive or negative)
   final Map<String, PortfolioPosition> result = {};
   for (final entry in mutable.entries) {
-    if (entry.value.quantity > 0.0001) {
-      final qty = entry.value.quantity;
+    if (entry.value.quantity.abs() > 0.0001) {
+      final qty   = entry.value.quantity;
       final total = entry.value.totalInvested;
       result[entry.key] = PortfolioPosition(
         asset: entry.key,
         category: entry.value.category,
         quantity: qty,
         totalInvested: total,
-        avgPrice: qty > 0 ? total / qty : 0,
+        avgPrice: qty != 0 ? total / qty : 0,
       );
     }
   }

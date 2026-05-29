@@ -4,64 +4,83 @@ import 'package:google_fonts/google_fonts.dart';
 class AppColors {
   AppColors._();
 
-  static const Color bg0 = Color(0xFF080B12);
-  static const Color bg1 = Color(0xFF101621);
-  static const Color bg2 = Color(0xFF171F2D);
-  static const Color bg3 = Color(0xFF202A3A);
-  static const Color bg4 = Color(0xFF2A3446);
+  // ── Backgrounds (light theme) ──────────────────────────────
+  static const Color bg0 = Color(0xFFECEEF2);
+  static const Color bg1 = Color(0xFFFFFFFF);
+  static const Color bg2 = Color(0xFFFFFFFF);
+  static const Color bg3 = Color(0xFFF3F4F6);
+  static const Color bg4 = Color(0xFFE5E7EB);
 
-  static const Color surfaceGlass = Color(0xCC171F2D);
-  static const Color surfaceElevated = Color(0xFF1B2534);
-  static const Color surfacePressed = Color(0xFF243044);
+  static const Color surfaceGlass = Color(0xFAFFFFFF);
+  static const Color surfaceElevated = Color(0xFFFFFFFF);
+  static const Color surfacePressed = Color(0xFFF3F4F6);
 
-  static const Color primary = Color(0xFF2F80ED);
-  static const Color primaryDim = Color(0xFF2568C7);
-  static const Color profit = Color(0xFF32D583);
-  static const Color loss = Color(0xFFF97066);
-  static const Color warning = Color(0xFFFDB022);
+  // ── Brand ──────────────────────────────────────────────────
+  static const Color primary = Color(0xFF2563EB);
+  static const Color primaryDim = Color(0xFF1D4ED8);
+  static const Color profit = Color(0xFF10B981);
+  static const Color profitDark = Color(0xFF047857);
+  static const Color loss = Color(0xFFEF4444);
+  static const Color warning = Color(0xFFF59E0B);
   static const Color accent = profit;
-  static const Color purple = Color(0xFF9B8AFB);
+  static const Color purple = Color(0xFF7C3AED);
 
   static const Color accentBlue = primary;
   static const Color accentGreen = profit;
   static const Color accentRed = loss;
   static const Color accentOrange = warning;
   static const Color accentPurple = purple;
-  static const Color accentTeal = Color(0xFF67E8F9);
+  static const Color accentTeal = Color(0xFF06B6D4);
 
-  static const Color textPrimary = Color(0xFFF8FAFC);
-  static const Color textSecondary = Color(0xFFAAB4C3);
-  static const Color textMuted = Color(0xFF667085);
+  // ── Text ──────────────────────────────────────────────────
+  static const Color textPrimary = Color(0xFF111827);
+  static const Color textSecondary = Color(0xFF6B7280);
+  static const Color textMuted = Color(0xFF9CA3AF);
 
-  static const Color border = Color(0x1AFFFFFF);
-  static const Color borderLight = Color(0x26FFFFFF);
-  static const Color badgeBg = Color(0x14FFFFFF);
+  // Text on blue header
+  static const Color textOnBlue = Color(0xFFFFFFFF);
+  static const Color textOnBlueDim = Color(0xFFDBEAFE);
+  static const Color textOnBlueReturn = Color(0xFF6EE7B7);
+  static const Color textOnBlueProfit = Color(0xFF10B981);
+
+  // ── Borders ───────────────────────────────────────────────
+  static const Color border = Color(0xFFE5E7EB);
+  static const Color borderLight = Color(0xFFF3F4F6);
+  static const Color badgeBg = Color(0x0F000000);
+
+  // ── Gradients ─────────────────────────────────────────────
+  static const LinearGradient headerGradient = LinearGradient(
+    colors: [Color(0xFF2563EB), Color(0xFF1D4ED8), Color(0xFF4338CA)],
+    begin: Alignment(-0.6, -1.0),
+    end: Alignment(1.0, 0.6),
+  );
 
   static const LinearGradient primaryGradient = LinearGradient(
-    colors: [Color(0xFF2F80ED), Color(0xFF7A5AF8)],
+    colors: [Color(0xFF2563EB), Color(0xFF7C3AED)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
   static const LinearGradient cardGradient = LinearGradient(
-    colors: [Color(0xFF1A2433), Color(0xFF141C28)],
+    colors: [Color(0xFFFFFFFF), Color(0xFFFAFBFC)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
+  // Used in BalanceCard (shown on blue header — white text)
   static const LinearGradient heroGradient = LinearGradient(
-    colors: [Color(0xFF13243C), Color(0xFF0B1018)],
+    colors: [Color(0xFF2563EB), Color(0xFF1D4ED8), Color(0xFF4338CA)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
   static const List<Color> chartColors = [
-    Color(0xFF2F80ED),
-    Color(0xFF32D583),
-    Color(0xFFFDB022),
-    Color(0xFFF97066),
-    Color(0xFF9B8AFB),
-    Color(0xFF67E8F9),
+    Color(0xFF2563EB),
+    Color(0xFF10B981),
+    Color(0xFFF59E0B),
+    Color(0xFFEF4444),
+    Color(0xFF7C3AED),
+    Color(0xFF06B6D4),
   ];
 }
 
@@ -92,15 +111,20 @@ class AppShadows {
 
   static List<BoxShadow> get card => [
         BoxShadow(
-          color: Colors.black.withOpacity(0.18),
-          blurRadius: 18,
-          offset: const Offset(0, 10),
+          color: Colors.black.withOpacity(0.06),
+          blurRadius: 16,
+          offset: const Offset(0, 4),
+        ),
+        BoxShadow(
+          color: Colors.black.withOpacity(0.04),
+          blurRadius: 4,
+          offset: const Offset(0, 1),
         ),
       ];
 
   static List<BoxShadow> glow(Color color) => [
         BoxShadow(
-          color: color.withOpacity(0.10),
+          color: color.withOpacity(0.18),
           blurRadius: 20,
           offset: const Offset(0, 8),
         ),
@@ -111,11 +135,11 @@ class AppTheme {
   AppTheme._();
 
   static ThemeData get dark {
-    final base = ThemeData.dark(useMaterial3: true);
+    final base = ThemeData.light(useMaterial3: true);
 
     return base.copyWith(
       scaffoldBackgroundColor: AppColors.bg0,
-      colorScheme: const ColorScheme.dark(
+      colorScheme: const ColorScheme.light(
         primary: AppColors.primary,
         secondary: AppColors.profit,
         surface: AppColors.bg2,
@@ -279,7 +303,7 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.primary,
-          side: const BorderSide(color: AppColors.borderLight),
+          side: const BorderSide(color: AppColors.border),
           minimumSize: const Size.fromHeight(52),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -297,7 +321,7 @@ class AppTheme {
       ),
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.bg4,
-        selectedColor: AppColors.primary.withOpacity(0.14),
+        selectedColor: AppColors.primary.withOpacity(0.10),
         labelStyle:
             GoogleFonts.inter(color: AppColors.textPrimary, fontSize: 12),
         side: const BorderSide(color: AppColors.border),
@@ -325,9 +349,9 @@ class AppTheme {
         ),
       ),
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: AppColors.surfaceElevated,
+        backgroundColor: const Color(0xFF1F2937),
         contentTextStyle:
-            GoogleFonts.inter(color: AppColors.textPrimary, fontSize: 14),
+            GoogleFonts.inter(color: Colors.white, fontSize: 14),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
         ),
