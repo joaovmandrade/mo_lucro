@@ -22,9 +22,9 @@ Future<void> main() async {
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
+      statusBarIconBrightness: Brightness.dark,
       systemNavigationBarColor: AppColors.bg0,
-      systemNavigationBarIconBrightness: Brightness.light,
+      systemNavigationBarIconBrightness: Brightness.dark,
     ),
   );
 
@@ -159,15 +159,16 @@ class _BottomNav extends StatelessWidget {
           height: 66,
           padding: const EdgeInsets.all(6),
           decoration: BoxDecoration(
-            color: AppColors.surfaceGlass,
+            color: AppColors.bg1,
             borderRadius: BorderRadius.circular(AppRadius.xl),
             border: Border.all(color: AppColors.border),
+            boxShadow: AppShadows.card,
           ),
           child: Row(
             children: List.generate(items.length, (i) {
               final active = i == currentIndex;
               final color =
-                  active ? AppColors.textPrimary : AppColors.textMuted;
+                  active ? AppColors.primary : AppColors.textMuted;
               final item = items[i];
               return Expanded(
                 child: InkWell(
@@ -252,7 +253,7 @@ class _SplashScreen extends StatelessWidget {
               style: TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: 26,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w900,
                 letterSpacing: -0.5,
               ),
             ),

@@ -115,136 +115,31 @@ class _PortfolioPageState extends State<PortfolioPage> {
         onRefresh: _load,
         child: CustomScrollView(
           slivers: [
-            // ── AppBar ─────────────────────────────────────────
-            SliverAppBar(
-              floating: true,
-              snap: true,
-              backgroundColor: AppColors.bg0,
-              titleSpacing: 20,
-              title: const Text('Portfólio',
-                  style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700)),
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.refresh_rounded,
-                      color: AppColors.textSecondary, size: 22),
-                  onPressed: _load,
-                ),
-              ],
+            // ── Blue gradient header ─────────────────────────
+            SliverToBoxAdapter(
+              child: _PortfolioHeader(
+                invested: invested,
+                positionCount: portfolio.length,
+                operationCount: _operations.length,
+                isLoading: _loading,
+                onRefresh: _load,
+              ),
             ),
 
+            // ── White body ───────────────────────────────────
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 100),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
-
-                  // ── Summary card ────────────────────────────
-                  Container(
-                    padding: const EdgeInsets.all(18),
-                    decoration: BoxDecoration(
-                      color: AppColors.bg2,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: Row(
-                      children: [
-                        // Total investido
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment:
-                                CrossAxisAlignment.start,
-                            children: [
-                              const Text('Total Investido',
-                                  style: TextStyle(
-                                      color: AppColors.textMuted,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w500)),
-                              const SizedBox(height: 4),
-                              Text(
-                                AppFormatters.currency(invested),
-                                style: const TextStyle(
-                                  color: AppColors.primary,
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Container(
-                            width: 1,
-                            height: 36,
-                            color: AppColors.border),
-                        // Posições
-                        Expanded(
-                          child: Padding(
-                            padding:
-                                const EdgeInsets.only(left: 16),
-                            child: Column(
-                              crossAxisAlignment:
-                                  CrossAxisAlignment.start,
-                              children: [
-                                const Text('Posições',
-                                    style: TextStyle(
-                                        color: AppColors.textMuted,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w500)),
-                                const SizedBox(height: 4),
-                                Text(
-                                  '${portfolio.length}',
-                                  style: const TextStyle(
-                                      color: AppColors.textPrimary,
-                                      fontSize: 17,
-                                      fontWeight: FontWeight.w800),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        Container(
-                            width: 1,
-                            height: 36,
-                            color: AppColors.border),
-                        // Operações
-                        Expanded(
-                          child: Padding(
-                            padding:
-                                const EdgeInsets.only(left: 16),
-                            child: Column(
-                              crossAxisAlignment:
-                                  CrossAxisAlignment.start,
-                              children: [
-                                const Text('Operações',
-                                    style: TextStyle(
-                                        color: AppColors.textMuted,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w500)),
-                                const SizedBox(height: 4),
-                                Text(
-                                  '${_operations.length}',
-                                  style: const TextStyle(
-                                      color: AppColors.textPrimary,
-                                      fontSize: 17,
-                                      fontWeight: FontWeight.w800),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
 
                   // ── Donut chart ─────────────────────────────
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: AppColors.bg2,
-                      borderRadius: BorderRadius.circular(16),
+                      color: AppColors.bg1,
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
                       border: Border.all(color: AppColors.border),
+                      boxShadow: AppShadows.card,
                     ),
                     child: _loading
                         ? const SizedBox(
@@ -281,9 +176,9 @@ class _PortfolioPageState extends State<PortfolioPage> {
                               color: isSelected
                                   ? AppColors.primary
                                       .withOpacity(0.15)
-                                  : AppColors.bg2,
+                                  : AppColors.bg1,
                               borderRadius:
-                                  BorderRadius.circular(20),
+                                  BorderRadius.circular(AppRadius.pill),
                               border: Border.all(
                                 color: isSelected
                                     ? AppColors.primary
@@ -308,7 +203,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
                   ),
                   const SizedBox(height: 16),
 
-                  // ── Asset list com botão deletar ────────────
+                  // ── Asset list ──────────────────────────────
                   if (_loading)
                     const Center(
                       child: Padding(
@@ -338,7 +233,6 @@ class _PortfolioPageState extends State<PortfolioPage> {
                     ...filtered.map((pos) => AssetCard(
                           position: pos,
                           onDelete: () {
-                            // Encontra a primeira operação do asset para deletar
                             final op = _operations.firstWhere(
                               (o) => o.asset == pos.asset,
                               orElse: () => _operations.first,
@@ -354,4 +248,306 @@ class _PortfolioPageState extends State<PortfolioPage> {
       ),
     );
   }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Portfolio Header
+// ─────────────────────────────────────────────────────────────
+
+class _PortfolioHeader extends StatelessWidget {
+  final double invested;
+  final int positionCount;
+  final int operationCount;
+  final bool isLoading;
+  final VoidCallback onRefresh;
+
+  const _PortfolioHeader({
+    required this.invested,
+    required this.positionCount,
+    required this.operationCount,
+    required this.isLoading,
+    required this.onRefresh,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: AppColors.headerGradient,
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(32),
+          bottomRight: Radius.circular(32),
+        ),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(22, 16, 22, 32),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+
+              // ── Top bar ──────────────────────────────────
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Text(
+                    'Portfólio',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 32,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -0.5,
+                      height: 1,
+                    ),
+                  ),
+                  const Spacer(),
+                  _GlassRefreshBtn(onTap: onRefresh),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              // ── Glass card ────────────────────────────────
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(22, 20, 22, 20),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.22),
+                    width: 1.2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.18),
+                      blurRadius: 24,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: isLoading
+                    ? const _HeaderSkeleton()
+                    : _HeaderStatsBody(
+                        invested: invested,
+                        positionCount: positionCount,
+                        operationCount: operationCount,
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Glass refresh button ──────────────────────────────────────
+class _GlassRefreshBtn extends StatelessWidget {
+  final VoidCallback onTap;
+  const _GlassRefreshBtn({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: 46,
+          height: 46,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.14),
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: Colors.white.withOpacity(0.28),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.12),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: const Icon(
+            Icons.refresh_rounded,
+            color: Colors.white,
+            size: 22,
+          ),
+        ),
+      );
+}
+
+// ── Stats body ────────────────────────────────────────────────
+class _HeaderStatsBody extends StatelessWidget {
+  final double invested;
+  final int positionCount;
+  final int operationCount;
+
+  const _HeaderStatsBody({
+    required this.invested,
+    required this.positionCount,
+    required this.operationCount,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Label
+        const Text(
+          'Total Investido',
+          style: TextStyle(
+            color: Color(0xFFB8CBFF),
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            letterSpacing: 0.3,
+          ),
+        ),
+        const SizedBox(height: 6),
+
+        // Main value — largest element
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            AppFormatters.currency(invested),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 40,
+              fontWeight: FontWeight.w900,
+              height: 1,
+              letterSpacing: -1,
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+
+        // Divider
+        Container(
+          height: 1,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.white.withOpacity(0.0),
+                Colors.white.withOpacity(0.15),
+                Colors.white.withOpacity(0.0),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Stats row
+        Row(
+          children: [
+            _StatItem(
+              icon: Icons.bar_chart_rounded,
+              label: 'Posições',
+              value: '$positionCount',
+            ),
+            // Vertical divider
+            Container(
+              width: 1,
+              height: 40,
+              margin: const EdgeInsets.symmetric(horizontal: 20),
+              color: Colors.white.withOpacity(0.15),
+            ),
+            _StatItem(
+              icon: Icons.show_chart_rounded,
+              label: 'Operações',
+              value: '$operationCount',
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+// ── Stat item with icon ───────────────────────────────────────
+class _StatItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _StatItem({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.12),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: Colors.white.withOpacity(0.18)),
+          ),
+          child: Icon(icon, color: Colors.white, size: 18),
+        ),
+        const SizedBox(width: 10),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                color: Color(0xFFB8CBFF),
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              value,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                height: 1,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+// ── Skeleton ──────────────────────────────────────────────────
+class _HeaderSkeleton extends StatelessWidget {
+  const _HeaderSkeleton();
+
+  Widget _box(double w, double h) => Container(
+        width: w,
+        height: h,
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.10),
+          borderRadius: BorderRadius.circular(6),
+        ),
+      );
+
+  @override
+  Widget build(BuildContext context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _box(120, 13),
+          const SizedBox(height: 8),
+          _box(220, 40),
+          const SizedBox(height: 20),
+          _box(double.infinity, 1),
+          const SizedBox(height: 16),
+          Row(children: [
+            _box(100, 36),
+            const SizedBox(width: 40),
+            _box(100, 36),
+          ]),
+        ],
+      );
 }

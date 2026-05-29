@@ -19,7 +19,6 @@ class _AssetCardState extends State<AssetCard> {
 
   double? _currentPrice;
   double? _changePercent;
-  bool _loadingPrice = true;
 
   @override
   void initState() {
@@ -29,24 +28,15 @@ class _AssetCardState extends State<AssetCard> {
 
   Future<void> _fetchPrice() async {
     final cat = widget.position.category;
-
-    // Renda fixa e outros não têm cotação em tempo real
-    if (cat == 'fixed_income' || cat == 'others') {
-      setState(() => _loadingPrice = false);
-      return;
-    }
-
-    // Passa a categoria para o serviço usar BRAPI ou CoinGecko
+    if (cat == 'fixed_income' || cat == 'others') return;
     final quote = await _marketService.getQuote(
       widget.position.asset,
       category: cat,
     );
-
     if (mounted) {
       setState(() {
         _currentPrice = quote.success ? quote.price : null;
         _changePercent = quote.success ? quote.changePercent : null;
-        _loadingPrice = false;
       });
     }
   }
@@ -61,189 +51,156 @@ class _AssetCardState extends State<AssetCard> {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
       decoration: BoxDecoration(
-        gradient: AppColors.cardGradient,
+        color: AppColors.bg1,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.border),
         boxShadow: AppShadows.card,
       ),
       child: Column(
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _Avatar(asset: widget.position.asset, category: widget.position.category),
-              const SizedBox(width: 12),
-
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
+          // ── Top section ──────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _Avatar(
+                    asset: widget.position.asset,
+                    category: widget.position.category),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
                             widget.position.asset,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               color: AppColors.textPrimary,
-                              fontSize: 16,
+                              fontSize: 17,
                               fontWeight: FontWeight.w800,
                             ),
                           ),
+                          const SizedBox(width: 8),
+                          _CategoryTag(category: widget.position.category),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        _companyName(widget.position.asset,
+                            widget.position.category),
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 13,
                         ),
-                        const SizedBox(width: 8),
-                        _CategoryTag(category: widget.position.category),
-                      ],
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${_quantityLabel(widget.position.quantity)} ações',
+                        style: const TextStyle(
+                          color: AppColors.textMuted,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    if (widget.onDelete != null) ...[
+                      GestureDetector(
+                        onTap: widget.onDelete,
+                        child: Container(
+                          width: 28,
+                          height: 28,
+                          decoration: BoxDecoration(
+                            color: AppColors.loss.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            border: Border.all(
+                                color: AppColors.loss.withOpacity(0.20)),
+                          ),
+                          child: const Icon(Icons.delete_outline_rounded,
+                              color: AppColors.loss, size: 15),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                    ],
+                    Text(
+                      AppFormatters.currency(
+                          widget.position.quantity * currentPrice),
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                     const SizedBox(height: 4),
-                    _PriceRow(
-                      loading: _loadingPrice,
-                      currentPrice: _currentPrice,
+                    _PnlBadge(
+                      percent: pnlPct,
+                      isProfit: isProfit,
                       changePercent: _changePercent,
-                      category: widget.position.category,
+                      hasPriceData: hasPriceData,
                     ),
                   ],
                 ),
-              ),
-
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  if (widget.onDelete != null)
-                    GestureDetector(
-                      onTap: widget.onDelete,
-                      child: Container(
-                        width: 28, height: 28,
-                        decoration: BoxDecoration(
-                          color: AppColors.loss.withOpacity(0.10),
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                          border: Border.all(color: AppColors.loss.withOpacity(0.25)),
-                        ),
-                        child: const Icon(Icons.delete_outline_rounded,
-                            color: AppColors.loss, size: 16),
-                      ),
-                    ),
-                  const SizedBox(height: 6),
-                  Text(
-                    AppFormatters.currency(pnl),
-                    style: TextStyle(
-                      color: isProfit ? AppColors.profit : AppColors.loss,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  _PnlBadge(percent: pnlPct, isProfit: isProfit),
-                  if (hasPriceData) ...[
-                    const SizedBox(height: 2),
-                    const Text('vs preço médio',
-                        style: TextStyle(color: AppColors.textMuted, fontSize: 9)),
-                  ],
-                ],
-              ),
-            ],
+              ],
+            ),
           ),
 
-          const SizedBox(height: 14),
-          Container(height: 1, color: Colors.white.withOpacity(0.08)),
-          const SizedBox(height: 12),
-
-          Row(
-            children: [
-              _Metric(
-                label: 'Qtd',
-                value: widget.position.quantity % 1 == 0
-                    ? widget.position.quantity.toInt().toString()
-                    : widget.position.quantity.toStringAsFixed(4),
+          // ── Bottom metrics ───────────────────────────────
+          Container(
+            decoration: const BoxDecoration(
+              color: AppColors.bg3,
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(AppRadius.lg),
+                bottomRight: Radius.circular(AppRadius.lg),
               ),
-              _Metric(
-                label: 'Preço Médio',
-                value: AppFormatters.currency(widget.position.avgPrice),
-              ),
-              _Metric(
-                label: hasPriceData ? 'Valor Atual' : 'Total',
-                value: hasPriceData
-                    ? AppFormatters.currency(widget.position.quantity * currentPrice)
-                    : AppFormatters.currency(widget.position.totalInvested),
-                align: CrossAxisAlignment.end,
-              ),
-            ],
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            child: Row(
+              children: [
+                _Metric(
+                  label: 'Preço Médio',
+                  value: AppFormatters.currency(widget.position.avgPrice),
+                ),
+                _Divider(),
+                _Metric(
+                  label: hasPriceData ? 'Preço Atual' : 'Total',
+                  value: hasPriceData
+                      ? AppFormatters.currency(_currentPrice!)
+                      : AppFormatters.currency(widget.position.totalInvested),
+                ),
+                _Divider(),
+                _Metric(
+                  label: 'Investido',
+                  value: AppFormatters.currency(widget.position.totalInvested),
+                  align: CrossAxisAlignment.end,
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
-}
 
-// ── Price row ─────────────────────────────────────────────────
-class _PriceRow extends StatelessWidget {
-  final bool loading;
-  final double? currentPrice;
-  final double? changePercent;
-  final String category;
+  String _quantityLabel(double qty) =>
+      qty % 1 == 0 ? qty.toInt().toString() : qty.toStringAsFixed(2);
 
-  const _PriceRow({
-    required this.loading,
-    required this.currentPrice,
-    required this.changePercent,
-    required this.category,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    if (category == 'fixed_income' || category == 'others') {
-      return Text(_categoryLabel(category),
-          style: const TextStyle(color: AppColors.textMuted, fontSize: 11));
-    }
-
-    if (loading) {
-      return Container(
-        width: 80, height: 10,
-        decoration: BoxDecoration(
-          color: AppColors.bg2,
-          borderRadius: BorderRadius.circular(4),
-        ),
-      );
-    }
-
-    if (currentPrice == null) {
-      return Text(_categoryLabel(category),
-          style: const TextStyle(color: AppColors.textMuted, fontSize: 11));
-    }
-
-    final change = changePercent ?? 0.0;
-    final isUp = change >= 0;
-    final changeColor = isUp ? AppColors.profit : AppColors.loss;
-
-    return Row(
-      children: [
-        Text(
-          AppFormatters.currency(currentPrice!),
-          style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 13,
-              fontWeight: FontWeight.w700),
-        ),
-        const SizedBox(width: 6),
-        Icon(
-          isUp ? Icons.arrow_drop_up_rounded : Icons.arrow_drop_down_rounded,
-          color: changeColor, size: 16,
-        ),
-        Text(
-          '${isUp ? '+' : ''}${change.toStringAsFixed(2)}%',
-          style: TextStyle(
-              color: changeColor, fontSize: 11, fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(width: 4),
-        Text(
-          category == 'crypto' ? '24h' : 'hoje',
-          style: const TextStyle(color: AppColors.textMuted, fontSize: 10),
-        ),
-      ],
-    );
+  String _companyName(String asset, String category) {
+    const names = {
+      'PETR4': 'Petrobras',
+      'VALE3': 'Vale',
+      'ITUB4': 'Itaú Unibanco',
+      'BBDC4': 'Bradesco',
+      'MGLU3': 'Magazine Luiza',
+      'WEGE3': 'Weg',
+      'ABEV3': 'Ambev',
+    };
+    return names[asset] ?? _categoryLabel(category);
   }
 
   String _categoryLabel(String cat) {
@@ -266,30 +223,34 @@ class _Avatar extends StatelessWidget {
 
   Color get _color {
     switch (category) {
-      case 'stocks': return AppColors.primary;
-      case 'crypto':  return AppColors.warning;
-      case 'fixed_income': return AppColors.profit;
-      case 'fiis': return AppColors.accent;
-      default: return AppColors.textSecondary;
+      case 'stocks':
+        return AppColors.primary;
+      case 'crypto':
+        return AppColors.warning;
+      case 'fixed_income':
+        return AppColors.profit;
+      case 'fiis':
+        return AppColors.accent;
+      default:
+        return AppColors.textSecondary;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 44, height: 44,
+      width: 44,
+      height: 44,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [_color.withOpacity(0.24), _color.withOpacity(0.09)],
-          begin: Alignment.topLeft, end: Alignment.bottomRight,
-        ),
+        color: _color.withOpacity(0.10),
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: _color.withOpacity(0.28)),
+        border: Border.all(color: _color.withOpacity(0.22)),
       ),
       child: Center(
         child: Text(
           asset.length > 2 ? asset.substring(0, 2) : asset,
-          style: TextStyle(color: _color, fontSize: 13, fontWeight: FontWeight.w800),
+          style: TextStyle(
+              color: _color, fontSize: 13, fontWeight: FontWeight.w800),
         ),
       ),
     );
@@ -303,21 +264,31 @@ class _CategoryTag extends StatelessWidget {
 
   Color get _color {
     switch (category) {
-      case 'stocks': return AppColors.primary;
-      case 'crypto':  return AppColors.warning;
-      case 'fixed_income': return AppColors.profit;
-      case 'fiis': return AppColors.accent;
-      default: return AppColors.textMuted;
+      case 'stocks':
+        return AppColors.primary;
+      case 'crypto':
+        return AppColors.warning;
+      case 'fixed_income':
+        return AppColors.profit;
+      case 'fiis':
+        return AppColors.accent;
+      default:
+        return AppColors.textMuted;
     }
   }
 
   String get _label {
     switch (category) {
-      case 'stocks': return 'Ações';
-      case 'crypto':  return 'Cripto';
-      case 'fixed_income': return 'Renda Fixa';
-      case 'fiis': return 'FIIs';
-      default: return 'Outros';
+      case 'stocks':
+        return 'Ações';
+      case 'crypto':
+        return 'Cripto';
+      case 'fixed_income':
+        return 'Renda Fixa';
+      case 'fiis':
+        return 'FIIs';
+      default:
+        return 'Outros';
     }
   }
 
@@ -326,12 +297,13 @@ class _CategoryTag extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
       decoration: BoxDecoration(
-        color: _color.withOpacity(0.12),
+        color: _color.withOpacity(0.08),
         borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(color: _color.withOpacity(0.25)),
+        border: Border.all(color: _color.withOpacity(0.20)),
       ),
       child: Text(_label,
-          style: TextStyle(color: _color, fontSize: 10, fontWeight: FontWeight.w600)),
+          style:
+              TextStyle(color: _color, fontSize: 9, fontWeight: FontWeight.w600)),
     );
   }
 }
@@ -340,20 +312,43 @@ class _CategoryTag extends StatelessWidget {
 class _PnlBadge extends StatelessWidget {
   final double percent;
   final bool isProfit;
-  const _PnlBadge({required this.percent, required this.isProfit});
+  final double? changePercent;
+  final bool hasPriceData;
+
+  const _PnlBadge({
+    required this.percent,
+    required this.isProfit,
+    this.changePercent,
+    this.hasPriceData = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final color = isProfit ? AppColors.profit : AppColors.loss;
+    final color = isProfit ? AppColors.profitDark : AppColors.loss;
+    final bgColor = isProfit
+        ? AppColors.profit.withOpacity(0.10)
+        : AppColors.loss.withOpacity(0.08);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(8),
+        color: bgColor,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
-      child: Text(
-        '${isProfit ? '+' : ''}${AppFormatters.percentSimple(percent)}%',
-        style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w700),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isProfit ? Icons.arrow_drop_up_rounded : Icons.arrow_drop_down_rounded,
+            color: color,
+            size: 14,
+          ),
+          Text(
+            '${isProfit ? '' : ''}${AppFormatters.percentSimple(percent.abs())}%',
+            style: TextStyle(
+                color: color, fontSize: 11, fontWeight: FontWeight.w700),
+          ),
+        ],
       ),
     );
   }
@@ -381,16 +376,25 @@ class _Metric extends StatelessWidget {
               style: const TextStyle(
                   color: AppColors.textMuted,
                   fontSize: 10,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: 0.3)),
-          const SizedBox(height: 3),
+                  fontWeight: FontWeight.w500)),
+          const SizedBox(height: 2),
           Text(value,
               style: const TextStyle(
                   color: AppColors.textPrimary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600)),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700)),
         ],
       ),
     );
   }
+}
+
+class _Divider extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) => Container(
+        width: 1,
+        height: 28,
+        margin: const EdgeInsets.symmetric(horizontal: 8),
+        color: AppColors.border,
+      );
 }
