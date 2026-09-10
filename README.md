@@ -1,19 +1,19 @@
-# 📱 Mo Lucro
+# Mo Lucro
 
 Aplicação fintech desenvolvida em **Flutter** para gerenciamento de carteira de investimentos e operações financeiras, com autenticação segura via **Supabase**.
 
 > Maximize seus lucros com inteligência financeira.
 
-## ✨ Funcionalidades
+## Funcionalidades
 
-- 🔐 Autenticação segura com Supabase
-- 📊 Visualização de gráficos e análises em tempo real
-- 💼 Gerenciamento de carteira de investimentos
-- 📈 Rastreamento de operações e transações
-- 💾 Sincronização de dados na nuvem
-- 🔄 Persistência automática de sessão
+- Autenticação segura com Supabase
+- Visualização de gráficos e análises em tempo real
+- Gerenciamento de carteira de investimentos
+- Rastreamento de operações e transações
+- Sincronização de dados na nuvem
+- Persistência automática de sessão
 
-## 🛠️ Stack Tecnológico
+## Stack Tecnológico
 
 ### Frontend
 
@@ -32,14 +32,14 @@ Aplicação fintech desenvolvida em **Flutter** para gerenciamento de carteira d
 - `google_fonts: ^6.2.1` - Tipografia
 - `intl: ^0.19.0` - Internacionalização
 
-## 📋 Requisitos do Sistema
+## Requisitos do Sistema
 
 - Flutter 3.10.0 ou superior
 - Dart 3.0.0 ou superior
 - iOS 11.0+ ou Android 5.0+
 - Conta Supabase ativa
 
-## 🚀 Início Rápido
+## Início Rápido
 
 ### 1. Clonar o repositório
 
@@ -69,7 +69,7 @@ export SUPABASE_ANON_KEY="sua-chave-anonima-aqui"
 flutter run --dart-define=SUPABASE_ANON_KEY=sua-chave-anonima-aqui
 ```
 
-## 🏗️ Estrutura do Projeto
+## Estrutura do Projeto
 
 ```
 mo_lucro_app/
@@ -89,7 +89,7 @@ mo_lucro_app/
 └── pubspec.yaml                  # Dependências do projeto
 ```
 
-## 🔄 Fluxo da Aplicação
+## Fluxo da Aplicação
 
 ```
 [Inicialização]
@@ -111,21 +111,21 @@ mo_lucro_app/
 - **Logout**: Usa `signOut`
 - **Persistência**: Gerenciada automaticamente por `supabase_flutter`
 
-## 📊 Configuração Supabase
+## Configuração Supabase
 
 | Campo        | Valor                                      |
 | ------------ | ------------------------------------------ |
 | **URL**      | `https://mmtaolgmadsqhlsmmixa.supabase.co` |
 | **Anon Key** | Configurada via `SUPABASE_ANON_KEY`        |
 
-## 📝 Modelos de Dados
+## Modelos de Dados
 
 - **GoalModel** - Objetivos financeiros
 - **OperationModel** - Operações de investimento
 - **TransactionModel** - Transações financeiras
 - **PortfolioPosition** - Posições em carteira
 
-## 🐛 Desenvolvimento
+## Desenvolvimento
 
 ### Gerar código
 
@@ -145,10 +145,6 @@ flutter test
 flutter analyze
 ```
 
-## 📄 Licença
+## Licença
 
 Este projeto está sob a licença MIT. Veja [LICENSE](LICENSE) para mais detalhes.
-
-## 👤 Autor
-
-Desenvolvido com ❤️
