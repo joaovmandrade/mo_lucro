@@ -1,8 +1,11 @@
 # Mo Lucro
 
-Aplicação fintech desenvolvida em **Flutter** para gerenciamento de carteira de investimentos e operações financeiras, com autenticação segura via **Supabase**.
+Aplicação fintech em **React Native** para gerenciamento de carteira de investimentos e operações financeiras, com autenticação segura via **Supabase**.
 
 > Maximize seus lucros com inteligência financeira.
+
+> Migrado de Flutter para React Native. O app Flutter original vivia em
+> `mo_lucro_app/` e permanece disponível no histórico do git.
 
 ## Funcionalidades
 
@@ -17,8 +20,9 @@ Aplicação fintech desenvolvida em **Flutter** para gerenciamento de carteira d
 
 ### Frontend
 
-- **Flutter** (v3.10.0+) - Framework multiplataforma
-- **Dart** (3.0.0+) - Linguagem de programação
+- **React Native** (0.86) via **Expo SDK 57** - Framework multiplataforma
+- **TypeScript** - Linguagem de programação
+- **expo-router** - Navegação por arquivos
 
 ### Backend & Serviços
 
@@ -27,16 +31,15 @@ Aplicação fintech desenvolvida em **Flutter** para gerenciamento de carteira d
 
 ### Dependências Principais
 
-- `supabase_flutter: ^2.12.4` - Cliente Supabase para Flutter
-- `fl_chart: ^1.2.0` - Gráficos interativos
-- `google_fonts: ^6.2.1` - Tipografia
-- `intl: ^0.19.0` - Internacionalização
+- `@supabase/supabase-js` - Cliente Supabase
+- `react-native-svg` - Base dos gráficos (donut e linha desenhados à mão)
+- `@expo-google-fonts/inter` - Tipografia
+- `date-fns` - Datas em pt-BR
 
 ## Requisitos do Sistema
 
-- Flutter 3.10.0 ou superior
-- Dart 3.0.0 ou superior
-- iOS 11.0+ ou Android 5.0+
+- Node.js 20 ou superior
+- iOS 15.1+ ou Android 7.0+
 - Conta Supabase ativa
 
 ## Início Rápido
@@ -51,43 +54,43 @@ cd mo_lucro
 ### 2. Instalar dependências
 
 ```bash
-cd mo_lucro_app
-flutter pub get
+cd mobile
+npm install
 ```
 
-### 3. Configurar Supabase
+### 3. Configurar Supabase (opcional)
 
-Crie um arquivo `.env` ou use variáveis de ambiente:
-
-```bash
-export SUPABASE_ANON_KEY="sua-chave-anonima-aqui"
-```
+As credenciais têm fallback embutido em `src/lib/supabase.ts`. Para apontar
+para outro projeto, copie `.env.example` para `.env`.
 
 ### 4. Executar a aplicação
 
 ```bash
-flutter run --dart-define=SUPABASE_ANON_KEY=sua-chave-anonima-aqui
+npm start   # depois: 'a' para Android, 'i' para iOS, 'w' para web
 ```
 
 ## Estrutura do Projeto
 
 ```
-mo_lucro_app/
-├── lib/
-│   ├── main.dart                 # Ponto de entrada
-│   ├── core/
-│   │   └── theme.dart            # Tema da aplicação
-│   ├── models/                   # Modelos de dados
-│   ├── pages/                    # Telas principais
-│   ├── widgets/                  # Componentes reutilizáveis
-│   ├── services/                 # Serviços e lógica
-│   ├── utils/                    # Utilitários
-│   └── shared/                   # Recursos compartilhados
-├── test/                         # Testes
-├── android/                      # Configuração Android
-├── ios/                          # Configuração iOS
-└── pubspec.yaml                  # Dependências do projeto
+mobile/
+├── src/
+│   ├── app/                      # Rotas (expo-router)
+│   │   ├── _layout.tsx           # Fontes, auth e stack raiz
+│   │   ├── login.tsx
+│   │   └── (tabs)/               # Dashboard, Portfólio, Transações, Metas
+│   ├── components/               # Cards, gráficos, formulário
+│   ├── contexts/                 # AuthContext
+│   ├── lib/supabase.ts           # Cliente Supabase
+│   ├── models/                   # Tipos e conversores de linha
+│   ├── services/                 # Acesso a dados e APIs externas
+│   ├── theme/                    # Cores, tokens e tipografia
+│   └── utils/                    # Formatters, carteira, catálogos
+├── assets/                       # Ícones e splash
+└── app.json                      # Configuração do Expo
 ```
+
+Detalhes da migração e o mapa arquivo a arquivo em
+[`mobile/README.md`](mobile/README.md).
 
 ## Fluxo da Aplicação
 
@@ -109,40 +112,34 @@ mo_lucro_app/
 
 - **Login**: Usa `signInWithPassword` com credenciais do Supabase
 - **Logout**: Usa `signOut`
-- **Persistência**: Gerenciada automaticamente por `supabase_flutter`
+- **Persistência**: Sessão guardada em AsyncStorage pelo `supabase-js`
 
 ## Configuração Supabase
 
 | Campo        | Valor                                      |
 | ------------ | ------------------------------------------ |
 | **URL**      | `https://mmtaolgmadsqhlsmmixa.supabase.co` |
-| **Anon Key** | Configurada via `SUPABASE_ANON_KEY`        |
+| **Anon Key** | `EXPO_PUBLIC_SUPABASE_ANON_KEY` (tem fallback) |
 
 ## Modelos de Dados
 
-- **GoalModel** - Objetivos financeiros
-- **OperationModel** - Operações de investimento
-- **TransactionModel** - Transações financeiras
+- **Goal** - Objetivos financeiros
+- **Operation** - Operações de investimento
+- **Transaction** - Transações financeiras
 - **PortfolioPosition** - Posições em carteira
 
 ## Desenvolvimento
 
-### Gerar código
+### Verificar tipos
 
 ```bash
-flutter pub run build_runner build
+cd mobile && npx tsc --noEmit
 ```
 
-### Executar testes
+### Gerar o bundle
 
 ```bash
-flutter test
-```
-
-### Analisar código
-
-```bash
-flutter analyze
+cd mobile && npx expo export --platform android
 ```
 
 ## Licença
