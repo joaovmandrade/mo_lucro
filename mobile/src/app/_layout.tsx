@@ -67,6 +67,7 @@ function RootNavigator() {
         <Stack.Screen name="operations/new" />
         <Stack.Screen name="transactions/new" />
         <Stack.Screen name="goals/new" />
+        <Stack.Screen name="knowledge/[id]" />
         <Stack.Screen name="simulator" />
         <Stack.Screen name="news" />
         <Stack.Screen name="profile" />
