@@ -24,6 +24,7 @@ export const navItems: NavDef[] = [
   { name: 'portfolio', icon: 'pie-chart-outline', activeIcon: 'pie-chart', label: 'Portfólio' },
   { name: 'transactions', icon: 'receipt-outline', activeIcon: 'receipt', label: 'Transações' },
   { name: 'goals', icon: 'flag-outline', activeIcon: 'flag', label: 'Metas' },
+  { name: 'knowledge', icon: 'book-outline', activeIcon: 'book', label: 'Conhecimento' },
 ];
 
 /** Porte de _BottomNav em main.dart — barra flutuante com pílula no item ativo. */
@@ -57,11 +58,16 @@ export function BottomNav({ state, navigation }: BottomTabBarProps) {
               onPress={onPress}
               accessibilityRole="tab"
               accessibilityState={{ selected: active }}
-              accessibilityLabel={item.label}
+              accessibilityLabel={item.name === 'knowledge' ? 'Base de Conhecimento' : item.label}
               style={[styles.item, active && styles.itemActive]}
             >
               <Ionicons name={active ? item.activeIcon : item.icon} size={22} color={color} />
-              <Text numberOfLines={1} style={[styles.label, { color }, active && styles.labelActive]}>
+              <Text
+  numberOfLines={1}
+  adjustsFontSizeToFit
+  minimumFontScale={0.8}
+  style={[styles.label, { color }, active && styles.labelActive]}
+>
                 {item.label}
               </Text>
             </Pressable>
@@ -91,6 +97,7 @@ const styles = StyleSheet.create({
   },
   item: {
     flex: 1,
+    paddingHorizontal: 2,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: radius.xl,
