@@ -1,6 +1,6 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -17,11 +17,13 @@ import {
 import { DateField } from '@/components/DateField';
 import { FieldLabel, PrimaryButton, ScreenHeader } from '@/components/form';
 import { Snackbar, useSnackbar } from '@/components/Snackbar';
-import type { AssetCategory, OperationType } from '@/models';
+import type { AssetCategory, OperationType, PortfolioPosition } from '@/models';
 import { marketDataService, operationService } from '@/services';
 import { alpha, colors, radius, shadows } from '@/theme';
 import { assetHintFor, suggestAssets, type AssetOption } from '@/utils/assetCatalog';
+import { quantityLabel } from '@/utils/categories';
 import { currency } from '@/utils/formatters';
+import { calculatePortfolio } from '@/utils/portfolio';
 
 /** Porte de lib/pages/add_operation_page.dart. */
 
@@ -50,13 +52,65 @@ export default function AddOperationScreen() {
   const [errors, setErrors] = useState<Record<string, string | null>>({});
   const [loading, setLoading] = useState(false);
 
+  // Posições atuais, para saber o que a pessoa tem quando ela for vender.
+  const [holdings, setHoldings] = useState<Record<string, PortfolioPosition>>({});
+  const [holdingsLoaded, setHoldingsLoaded] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    operationService
+      .getOperations()
+      .then((operations) => {
+        if (active) setHoldings(calculatePortfolio(operations));
+      })
+      .catch(() => {
+        // Sem posições carregadas, a venda cai no fluxo antigo (digitação livre).
+      })
+      .finally(() => {
+        if (active) setHoldingsLoaded(true);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // O que a pessoa possui na categoria escolhida, para listar na hora da venda.
+  const ownedInCategory = useMemo(
+    () =>
+      Object.values(holdings)
+        .filter((position) => position.category === category)
+        .sort((a, b) => a.asset.localeCompare(b.asset)),
+    [holdings, category],
+  );
+
+  function ownedSuggestions(query: string): AssetOption[] {
+    const trimmed = query.trim().toLowerCase();
+    return ownedInCategory
+      .filter((position) => trimmed.length === 0 || position.asset.toLowerCase().includes(trimmed))
+      .slice(0, 8)
+      .map((position) => ({
+        ticker: position.asset,
+        name: `Você tem ${quantityLabel(position.quantity)} disponível`,
+      }));
+  }
+
+  const assetUpper = asset.trim().toUpperCase();
+  const matchingHolding =
+    type === 'sell' ? ownedInCategory.find((position) => position.asset === assetUpper) : undefined;
+
   const total =
     (Number.parseFloat(quantity.replace(',', '.')) || 0) *
     (Number.parseFloat(price.replace(',', '.')) || 0);
 
   function onAssetChanged(text: string) {
     setAsset(text);
-    setSuggestions(suggestAssets(category, text));
+    setSuggestions(type === 'sell' ? ownedSuggestions(text) : suggestAssets(category, text));
+  }
+
+  function onAssetFocused() {
+    // Em venda, mostra de cara os ativos que a pessoa tem nessa categoria,
+    // sem precisar digitar nada — é o que faltava para "achar" o ativo.
+    if (type === 'sell' && asset.length === 0) setSuggestions(ownedSuggestions(''));
   }
 
   function clearAsset() {
@@ -100,6 +154,16 @@ export default function AddOperationScreen() {
     setSuggestions([]);
   }
 
+  function onTypeChanged(next: OperationType) {
+    setType(next);
+    // O catálogo de sugestões muda entre "o que existe" (compra) e
+    // "o que você tem" (venda), então o que já estava digitado não vale mais.
+    setAsset('');
+    setPrice('');
+    setPriceIsAuto(false);
+    setSuggestions([]);
+  }
+
   function validate(): boolean {
     const next: Record<string, string | null> = {};
 
@@ -112,6 +176,17 @@ export default function AddOperationScreen() {
     if (price.length === 0) next.price = 'Obrigatório';
     else if (!Number.isFinite(Number.parseFloat(price.replace(',', '.'))))
       next.price = 'Inválido';
+
+    if (type === 'sell' && asset.trim().length > 0 && holdingsLoaded) {
+      if (!matchingHolding) {
+        next.asset = `Você não tem ${assetUpper} nesta categoria`;
+      } else if (!next.quantity) {
+        const qty = Number.parseFloat(quantity.replace(',', '.'));
+        if (Number.isFinite(qty) && qty > matchingHolding.quantity + 0.0001) {
+          next.quantity = `Você só tem ${quantityLabel(matchingHolding.quantity)} disponível`;
+        }
+      }
+    }
 
     setErrors(next);
     return Object.values(next).every((value) => !value);
@@ -164,13 +239,13 @@ export default function AddOperationScreen() {
               label="Compra"
               color={colors.profit}
               selected={type === 'buy'}
-              onPress={() => setType('buy')}
+              onPress={() => onTypeChanged('buy')}
             />
             <TypeButton
               label="Venda"
               color={colors.loss}
               selected={type === 'sell'}
-              onPress={() => setType('sell')}
+              onPress={() => onTypeChanged('sell')}
             />
           </View>
 
@@ -187,7 +262,8 @@ export default function AddOperationScreen() {
               <TextInput
                 value={asset}
                 onChangeText={onAssetChanged}
-                placeholder={assetHintFor(category)}
+                onFocus={onAssetFocused}
+                placeholder={type === 'sell' ? 'Toque para ver seus ativos' : assetHintFor(category)}
                 placeholderTextColor={colors.textMuted}
                 autoCapitalize="characters"
                 style={styles.assetInput}
@@ -198,7 +274,18 @@ export default function AddOperationScreen() {
                 </Pressable>
               ) : null}
             </View>
-            {errors.asset ? <Text style={styles.errorText}>{errors.asset}</Text> : null}
+
+            {errors.asset ? (
+              <Text style={styles.errorText}>{errors.asset}</Text>
+            ) : type === 'sell' && asset.trim().length > 0 ? (
+              matchingHolding ? (
+                <Text style={styles.helperText}>
+                  Você tem {quantityLabel(matchingHolding.quantity)} {assetUpper} disponível
+                </Text>
+              ) : holdingsLoaded ? (
+                <Text style={styles.errorText}>Você não tem {assetUpper} nesta categoria</Text>
+              ) : null
+            ) : null}
 
             {suggestions.length > 0 ? (
               <View style={styles.suggestions}>
@@ -398,6 +485,7 @@ const styles = StyleSheet.create({
   plainInput: { flex: 1, paddingVertical: 16, color: colors.textPrimary, fontSize: 14 },
   priceInputAuto: { color: colors.profitDark, fontWeight: '700' },
   errorText: { marginTop: 6, color: colors.loss, fontSize: 12 },
+  helperText: { marginTop: 6, color: colors.textSecondary, fontSize: 12 },
 
   suggestions: {
     position: 'absolute',
