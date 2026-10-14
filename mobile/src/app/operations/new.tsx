@@ -166,22 +166,25 @@ export default function AddOperationScreen() {
 
   function validate(): boolean {
     const next: Record<string, string | null> = {};
+    const qty = Number.parseFloat(quantity.replace(',', '.'));
+    const unitPrice = Number.parseFloat(price.replace(',', '.'));
 
     if (asset.trim().length === 0) next.asset = 'Informe o código';
 
     if (quantity.length === 0) next.quantity = 'Obrigatório';
-    else if (!Number.isFinite(Number.parseFloat(quantity.replace(',', '.'))))
+    else if (!Number.isFinite(qty))
       next.quantity = 'Inválido';
+    else if (qty <= 0) next.quantity = 'Deve ser maior que zero';
 
     if (price.length === 0) next.price = 'Obrigatório';
-    else if (!Number.isFinite(Number.parseFloat(price.replace(',', '.'))))
+    else if (!Number.isFinite(unitPrice))
       next.price = 'Inválido';
+    else if (unitPrice <= 0) next.price = 'Deve ser maior que zero';
 
     if (type === 'sell' && asset.trim().length > 0 && holdingsLoaded) {
       if (!matchingHolding) {
         next.asset = `Você não tem ${assetUpper} nesta categoria`;
       } else if (!next.quantity) {
-        const qty = Number.parseFloat(quantity.replace(',', '.'));
         if (Number.isFinite(qty) && qty > matchingHolding.quantity + 0.0001) {
           next.quantity = `Você só tem ${quantityLabel(matchingHolding.quantity)} disponível`;
         }
@@ -198,7 +201,7 @@ export default function AddOperationScreen() {
     const qty = Number.parseFloat(quantity.replace(',', '.'));
     const unitPrice = Number.parseFloat(price.replace(',', '.'));
 
-    if (!Number.isFinite(qty) || !Number.isFinite(unitPrice)) {
+    if (!Number.isFinite(qty) || qty <= 0 || !Number.isFinite(unitPrice) || unitPrice <= 0) {
       show('Valores inválidos', { isError: true });
       return;
     }
