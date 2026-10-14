@@ -30,6 +30,7 @@ import { calculatePortfolio } from '@/utils/portfolio';
 const CATEGORIES: { key: AssetCategory; label: string }[] = [
   { key: 'stocks', label: 'Ações' },
   { key: 'crypto', label: 'Criptomoedas' },
+  { key: 'fiis', label: 'FIIs' },
   { key: 'fixed_income', label: 'Renda Fixa' },
   { key: 'others', label: 'Outros' },
 ];

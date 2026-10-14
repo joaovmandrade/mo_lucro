@@ -73,7 +73,7 @@ const FIXED_INCOME: AssetOption[] = [
   { ticker: 'POUP', name: 'Poupança' },
 ];
 
-const OTHERS: AssetOption[] = [
+const FIIS: AssetOption[] = [
   { ticker: 'MXRF11', name: 'Maxi Renda FII' },
   { ticker: 'HGLG11', name: 'CSHG Logística FII' },
   { ticker: 'KNRI11', name: 'Kinea Renda Imob.' },
@@ -82,6 +82,9 @@ const OTHERS: AssetOption[] = [
   { ticker: 'RBRP11', name: 'RBR Properties' },
   { ticker: 'BCFF11', name: 'BTG Pactual FoF' },
   { ticker: 'HFOF11', name: 'Hedge Top FoF' },
+];
+
+const OTHERS: AssetOption[] = [
   { ticker: 'OUTRO', name: 'Outro' },
 ];
 
@@ -93,6 +96,8 @@ export function optionsFor(category: string): AssetOption[] {
       return CRYPTOS;
     case 'fixed_income':
       return FIXED_INCOME;
+    case 'fiis':
+      return FIIS;
     default:
       return OTHERS;
   }
@@ -120,6 +125,8 @@ export function assetHintFor(category: string): string {
       return 'Ex: BTC, ETH...';
     case 'fixed_income':
       return 'Ex: CDB, SELIC...';
+    case 'fiis':
+      return 'Ex: MXRF11, HGLG11...';
     default:
       return 'Ex: MXRF11...';
   }
