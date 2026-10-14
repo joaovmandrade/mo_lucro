@@ -50,8 +50,8 @@ export async function deleteTransaction(id: string): Promise<void> {
 export type MonthSummary = { income: number; expense: number };
 
 /**
- * Totais de entrada e saída do mês. Filtra por created_at porque a tabela em
- * produção pode não ter uma coluna 'date' separada.
+ * Totais de entrada e saída do mês, usando a mesma data exibida na lista.
+ * Linhas antigas sem 'date' usam created_at por meio de transactionFromRow.
  *
  * Nunca propaga erro: uma falha aqui não pode travar o carregamento das operações.
  */
@@ -59,15 +59,10 @@ export async function getMonthSummary(year: number, month: number): Promise<Mont
   try {
     const userId = await requireUserId();
 
-    const start = new Date(year, month - 1, 1);
-    const end = new Date(year, month, 1);
-
     const { data, error } = await supabase
       .from('transactions')
       .select()
-      .eq('user_id', userId)
-      .gte('created_at', start.toISOString())
-      .lt('created_at', end.toISOString());
+      .eq('user_id', userId);
 
     if (error) throw error;
 
@@ -75,9 +70,13 @@ export async function getMonthSummary(year: number, month: number): Promise<Mont
     let expense = 0;
 
     for (const row of data ?? []) {
-      const amount = Number(row.amount);
-      if (row.type === 'income') income += amount;
-      else expense += amount;
+      const transaction = transactionFromRow(row);
+      if (transaction.date.getFullYear() !== year || transaction.date.getMonth() !== month - 1) {
+        continue;
+      }
+
+      if (transaction.type === 'income') income += transaction.amount;
+      else expense += transaction.amount;
     }
 
     return { income, expense };
