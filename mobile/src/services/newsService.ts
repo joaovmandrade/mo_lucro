@@ -11,7 +11,11 @@ export type NewsItem = {
   url?: string | null;
   imageUrl?: string | null;
   source?: string | null;
+  /** Trecho do conteúdo devolvido pela NewsAPI (limitado pelo plano gratuito). */
+  content?: string | null;
   isFeatured: boolean;
+  /** true quando a notícia é de exemplo (a NewsAPI falhou ou não trouxe resultados). */
+  isSample?: boolean;
 };
 
 const TICKERS = [
@@ -57,13 +61,21 @@ function formatTimeAgo(iso: string): string {
   return `há ${Math.floor(diffMs / 86_400_000)} d`;
 }
 
-function newsItemFromApi(json: Record<string, any>, index: number): NewsItem {
+/** A NewsAPI corta `content` em ~200 caracteres e acrescenta "… [+1234 chars]". */
+function cleanContent(raw: unknown): string | null {
+  if (typeof raw !== 'string') return null;
+  const text = raw.replace(/\s*\[\+\d+ chars\]\s*$/, '').trim();
+  return text.length > 0 ? text : null;
+}
+
+function newsItemFromApi(json: Record<string, any>, index: number, category: string): NewsItem {
   // Remove o sufixo " - Nome do Veículo" que a NewsAPI acrescenta ao título.
   const title = String(json.title ?? '').replace(/\s*-\s*[^-]+$/, '');
   const description = String(json.description ?? '');
 
   return {
-    category: inferCategory(title + description),
+    // Na aba "Todos" a categoria é inferida do texto; nas demais, é a da busca.
+    category: category === 'all' ? inferCategory(title + description) : category,
     ticker: extractTicker(title),
     headline: title,
     sub: description.length > 0 ? description : 'Toque para ler mais.',
@@ -71,6 +83,7 @@ function newsItemFromApi(json: Record<string, any>, index: number): NewsItem {
     url: json.url ?? null,
     imageUrl: json.urlToImage ?? null,
     source: json.source?.name ?? '',
+    content: cleanContent(json.content),
     isFeatured: index === 0,
   };
 }
@@ -80,12 +93,15 @@ function newsItemFromApi(json: Record<string, any>, index: number): NewsItem {
 const API_KEY = process.env.EXPO_PUBLIC_NEWS_API_KEY ?? 'a12538a4596c42fe9221d38f17e8e65a';
 const BASE_URL = 'https://newsapi.org/v2';
 
+// Termos unidos por OR: a NewsAPI exige todas as palavras quando não há
+// operador, e as buscas antigas ("fundos imobiliarios brasil", sem acento)
+// devolviam 0 resultados — as abas caíam sempre nas notícias de exemplo.
 const QUERY_BY_CATEGORY: Record<string, string> = {
   all: 'mercado financeiro brasil',
-  geo: 'geopolitica petroleo brasil',
-  fiis: 'fundos imobiliarios brasil',
-  dividends: 'dividendos acoes brasil',
-  economy: 'selic inflacao brasil',
+  geo: 'petróleo OR geopolítica OR "Oriente Médio"',
+  fiis: '"fundos imobiliários" OR FII OR FIIs',
+  dividends: 'dividendos OR proventos OR JCP',
+  economy: 'Selic OR IPCA OR inflação OR Copom',
 };
 
 export async function fetchNews(category = 'all'): Promise<NewsItem[]> {
@@ -117,7 +133,9 @@ async function fetchFromNewsApi(category: string): Promise<NewsItem[]> {
   }
 
   const articles: any[] = decoded.articles ?? [];
-  return articles.map(newsItemFromApi);
+  return articles
+    .filter((a) => a?.title && a.title !== '[Removed]')
+    .map((a, index) => newsItemFromApi(a, index, category));
 }
 
 function mockNews(category: string): NewsItem[] {
@@ -159,13 +177,13 @@ function mockNews(category: string): NewsItem[] {
       timeAgo: 'há 10 h', isFeatured: false,
     },
     {
-      category: 'economy', ticker: 'BBDC4',
+      category: 'economy', ticker: null,
       headline: 'Banco do Brasil eleva guidance de crédito para 2025',
       sub: 'Carteira deve crescer entre 9% e 13%.',
       timeAgo: 'há 12 h', isFeatured: false,
     },
   ];
 
-  if (category === 'all') return all;
-  return all.filter((n) => n.category === category);
+  const items = category === 'all' ? all : all.filter((n) => n.category === category);
+  return items.map((n) => ({ ...n, isSample: true }));
 }

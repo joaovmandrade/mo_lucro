@@ -1,10 +1,14 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { withTiming, type EntryExitAnimationFunction } from 'react-native-reanimated';
 
 import { PrimaryButton, ScreenHeader } from '@/components/form';
-import { alpha, colors, radius, spacing } from '@/theme';
+import { profileService } from '@/services';
+import type { InvestorProfile } from '@/services/profileService';
+import { alpha, makeStyles, radius, spacing, type Palette } from '@/theme';
+import { motion } from '@/theme/motion';
+import { useTheme } from '@/contexts/ThemeContext';
 
 /** Porte de lib/pages/investor_profile_page.dart — quiz de perfil do investidor. */
 
@@ -49,12 +53,15 @@ const QUESTIONS: Question[] = [
   },
 ];
 
-type Allocation = { label: string; pct: number; color: string };
+/** Cores pelo nome da paleta, para seguirem o tema claro ou escuro. */
+type ColorKey = keyof Palette;
+
+type Allocation = { label: string; pct: number; color: ColorKey };
 
 type ProfileInfo = {
   title: string;
   icon: keyof typeof MaterialIcons.glyphMap;
-  color: string;
+  color: ColorKey;
   description: string;
   traits: string[];
   allocation: Allocation[];
@@ -64,7 +71,7 @@ const RESULT_INFO: Record<string, ProfileInfo> = {
   conservative: {
     title: 'Conservador',
     icon: 'shield',
-    color: '#00D4AA',
+    color: 'profit',
     description:
       'Você prioriza a segurança do seu patrimônio e prefere investimentos com baixo risco e volatilidade.',
     traits: [
@@ -73,15 +80,15 @@ const RESULT_INFO: Record<string, ProfileInfo> = {
       'Horizonte de investimento mais curto',
     ],
     allocation: [
-      { label: 'Renda Fixa / Tesouro', pct: 70, color: '#00D4AA' },
-      { label: 'FIIs', pct: 20, color: '#4B7BF5' },
-      { label: 'Ações', pct: 10, color: '#FFB547' },
+      { label: 'Renda Fixa / Tesouro', pct: 70, color: 'profit' },
+      { label: 'FIIs', pct: 20, color: 'accentTeal' },
+      { label: 'Ações', pct: 10, color: 'primary' },
     ],
   },
   moderate: {
     title: 'Moderado',
     icon: 'balance',
-    color: '#4B7BF5',
+    color: 'primary',
     description:
       'Você busca equilíbrio entre segurança e crescimento, aceitando riscos controlados em troca de melhores retornos.',
     traits: [
@@ -90,15 +97,15 @@ const RESULT_INFO: Record<string, ProfileInfo> = {
       'Horizonte de médio a longo prazo',
     ],
     allocation: [
-      { label: 'Ações', pct: 40, color: '#4B7BF5' },
-      { label: 'Renda Fixa', pct: 35, color: '#00D4AA' },
-      { label: 'FIIs', pct: 25, color: '#B47BF5' },
+      { label: 'Ações', pct: 40, color: 'primary' },
+      { label: 'Renda Fixa', pct: 35, color: 'profit' },
+      { label: 'FIIs', pct: 25, color: 'accentTeal' },
     ],
   },
   aggressive: {
     title: 'Arrojado',
     icon: 'rocket-launch',
-    color: '#FFB547',
+    color: 'warning',
     description:
       'Você busca maximizar seus retornos e aceita alta volatilidade como parte da estratégia de crescimento acelerado.',
     traits: [
@@ -107,9 +114,9 @@ const RESULT_INFO: Record<string, ProfileInfo> = {
       'Horizonte de longo prazo (5+ anos)',
     ],
     allocation: [
-      { label: 'Ações', pct: 60, color: '#FFB547' },
-      { label: 'Cripto', pct: 20, color: '#FF4D6A' },
-      { label: 'Renda Fixa', pct: 20, color: '#00D4AA' },
+      { label: 'Ações', pct: 60, color: 'primary' },
+      { label: 'Cripto', pct: 20, color: 'warning' },
+      { label: 'Renda Fixa', pct: 20, color: 'profit' },
     ],
   },
 };
@@ -123,28 +130,34 @@ const LETTERS = ['A', 'B', 'C'];
 const enterStep: EntryExitAnimationFunction = () => {
   'worklet';
   return {
-    initialValues: { opacity: 0, transform: [{ translateX: 14 }] },
+    initialValues: { opacity: 0, transform: [{ translateX: motion.rise }] },
     animations: {
-      opacity: withTiming(1, { duration: 350 }),
-      transform: [{ translateX: withTiming(0, { duration: 350 }) }],
+      opacity: withTiming(1, { duration: motion.enter, easing: motion.ease }),
+      transform: [{ translateX: withTiming(0, { duration: motion.enter, easing: motion.ease }) }],
     },
   };
 };
 
 export default function InvestorProfileScreen() {
+  const styles = useStyles();
+  const { colors } = useTheme();
   // -1 = intro; QUESTIONS.length = resultado
   const [step, setStep] = useState(-1);
   const [answers, setAnswers] = useState<(number | null)[]>(Array(QUESTIONS.length).fill(null));
+  const [saved, setSaved] = useState<InvestorProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
-  const isComplete = !answers.includes(null) && step >= QUESTIONS.length;
+  // Se o usuário já respondeu, abre direto no resultado salvo.
+  useEffect(() => {
+    profileService
+      .getProfile()
+      .then(setSaved)
+      .catch((error) => console.warn('[profile] não foi possível carregar:', error))
+      .finally(() => setLoading(false));
+  }, []);
 
-  /** Cada resposta vale 0, 1 ou 2 — a soma define o perfil. */
-  function result(): string {
-    const total = answers.reduce<number>((sum, answer) => sum + (answer ?? 0), 0);
-    if (total <= 4) return 'conservative';
-    if (total <= 8) return 'moderate';
-    return 'aggressive';
-  }
+  const showSaved = saved !== null && step === -1;
 
   function selectOption(optionIndex: number) {
     setAnswers((current) => {
@@ -154,39 +167,74 @@ export default function InvestorProfileScreen() {
     });
   }
 
-  function restart() {
-    setStep(-1);
-    setAnswers(Array(QUESTIONS.length).fill(null));
+  async function finish() {
+    const complete = answers.map((answer) => answer ?? 0);
+    setSaving(true);
+    try {
+      setSaved(await profileService.saveProfile(complete));
+    } catch (error) {
+      console.warn('[profile] não foi possível salvar:', error);
+      const { profile, score } = profileService.classify(complete);
+      setSaved({
+        profile,
+        score,
+        answers: complete,
+        updatedAt: new Date().toISOString(),
+        synced: false,
+      });
+    } finally {
+      setSaving(false);
+      setStep(-1);
+    }
   }
+
+  function restart() {
+    setSaved(null);
+    setAnswers(Array(QUESTIONS.length).fill(null));
+    setStep(0);
+  }
+
+  const isLastStep = step === QUESTIONS.length - 1;
 
   return (
     <View style={styles.screen}>
       <ScreenHeader title="Perfil do Investidor" />
 
-      {/* A `key` remonta a view a cada passo, que é o que dispara a transição. */}
-      <Animated.View key={step} style={styles.flex} entering={enterStep}>
-        {step === -1 ? (
-          <IntroView onStart={() => setStep(0)} />
-        ) : isComplete ? (
-          <ResultView result={result()} onRestart={restart} />
-        ) : (
-          <QuizView
-            step={step}
-            total={QUESTIONS.length}
-            question={QUESTIONS[step]}
-            selected={answers[step]}
-            onSelect={selectOption}
-            onNext={answers[step] !== null ? () => setStep(step + 1) : undefined}
-            onPrev={step > 0 ? () => setStep(step - 1) : undefined}
-          />
-        )}
-      </Animated.View>
+      {loading ? (
+        <View style={styles.centered}>
+          <ActivityIndicator color={colors.primary} />
+        </View>
+      ) : (
+        /* A `key` remonta a view a cada passo, que é o que dispara a transição. */
+        <Animated.View key={showSaved ? 'result' : step} style={styles.flex} entering={enterStep}>
+          {showSaved ? (
+            <ResultView saved={saved} onRestart={restart} />
+          ) : step === -1 ? (
+            <IntroView onStart={() => setStep(0)} />
+          ) : (
+            <QuizView
+              step={step}
+              total={QUESTIONS.length}
+              question={QUESTIONS[step]}
+              selected={answers[step]}
+              onSelect={selectOption}
+              saving={saving}
+              onNext={
+                answers[step] === null ? undefined : isLastStep ? finish : () => setStep(step + 1)
+              }
+              onPrev={step > 0 ? () => setStep(step - 1) : undefined}
+            />
+          )}
+        </Animated.View>
+      )}
     </View>
   );
 }
 
 // ── Intro ────────────────────────────────────────────────────
 function IntroView({ onStart }: { onStart: () => void }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   return (
     <View style={styles.intro}>
       <Text style={styles.introTitle}>Descubra seu{'\n'}Perfil de Investidor</Text>
@@ -195,9 +243,9 @@ function IntroView({ onStart }: { onStart: () => void }) {
       </Text>
 
       <View style={styles.previewRow}>
-        <ProfilePreview icon="shield" label="Conservador" color="#00D4AA" />
-        <ProfilePreview icon="balance" label="Moderado" color="#4B7BF5" />
-        <ProfilePreview icon="rocket-launch" label="Arrojado" color="#FFB547" />
+        <ProfilePreview icon="shield" label="Conservador" color={colors.profit} />
+        <ProfilePreview icon="balance" label="Moderado" color={colors.primary} />
+        <ProfilePreview icon="rocket-launch" label="Arrojado" color={colors.warning} />
       </View>
 
       <View style={styles.introButton}>
@@ -216,6 +264,7 @@ function ProfilePreview({
   label: string;
   color: string;
 }) {
+  const styles = useStyles();
   return (
     <View style={styles.preview}>
       <View
@@ -226,7 +275,7 @@ function ProfilePreview({
       >
         <MaterialIcons name={icon} size={28} color={color} />
       </View>
-      <Text style={[styles.previewLabel, { color: alpha(color, 0.9) }]}>{label}</Text>
+      <Text style={styles.previewLabel}>{label}</Text>
     </View>
   );
 }
@@ -240,7 +289,9 @@ function QuizView({
   onSelect,
   onNext,
   onPrev,
+  saving = false,
 }: {
+  saving?: boolean;
   step: number;
   total: number;
   question: Question;
@@ -249,6 +300,7 @@ function QuizView({
   onNext?: () => void;
   onPrev?: () => void;
 }) {
+  const styles = useStyles();
   const progress = (step + 1) / total;
 
   return (
@@ -298,6 +350,7 @@ function QuizView({
             label={step === total - 1 ? 'Ver Resultado' : 'Próxima'}
             onPress={() => onNext?.()}
             disabled={!onNext}
+            loading={saving}
           />
         </View>
       </View>
@@ -306,32 +359,49 @@ function QuizView({
 }
 
 // ── Resultado ────────────────────────────────────────────────
-function ResultView({ result, onRestart }: { result: string; onRestart: () => void }) {
-  const info = RESULT_INFO[result];
+function ResultView({ saved, onRestart }: { saved: InvestorProfile; onRestart: () => void }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
+  const info = RESULT_INFO[saved.profile];
+  const color = colors[info.color];
+  const updated = new Date(saved.updatedAt).toLocaleDateString('pt-BR');
 
   return (
     <ScrollView contentContainerStyle={styles.resultContent}>
       <View
         style={[
           styles.resultIcon,
-          { backgroundColor: alpha(info.color, 0.1), borderColor: alpha(info.color, 0.3) },
+          { backgroundColor: alpha(color, 0.1), borderColor: alpha(color, 0.3) },
         ]}
       >
-        <MaterialIcons name={info.icon} size={46} color={info.color} />
+        <MaterialIcons name={info.icon} size={48} color={color} />
       </View>
 
-      <Text style={[styles.resultTitle, { color: info.color }]}>Você é {info.title}</Text>
+      <Text style={styles.resultTitle}>Você é {info.title}</Text>
       <Text style={styles.resultDescription}>{info.description}</Text>
+
+      <View style={styles.savedRow}>
+        <MaterialIcons
+          name={saved.synced ? 'cloud-done' : 'phone-android'}
+          size={16}
+          color={colors.textMuted}
+        />
+        <Text style={styles.savedText}>
+          {saved.synced
+            ? `Perfil salvo na sua conta em ${updated}`
+            : `Perfil salvo neste aparelho em ${updated}`}
+        </Text>
+      </View>
 
       <View
         style={[
           styles.traits,
-          { backgroundColor: alpha(info.color, 0.06), borderColor: alpha(info.color, 0.2) },
+          { backgroundColor: alpha(color, 0.06), borderColor: alpha(color, 0.2) },
         ]}
       >
         {info.traits.map((trait) => (
           <View key={trait} style={styles.traitRow}>
-            <MaterialIcons name="check-circle" size={16} color={info.color} />
+            <MaterialIcons name="check-circle" size={16} color={color} />
             <Text style={styles.traitText}>{trait}</Text>
           </View>
         ))}
@@ -343,13 +413,13 @@ function ResultView({ result, onRestart }: { result: string; onRestart: () => vo
         <View key={item.label} style={styles.allocationRow}>
           <View style={styles.allocationLabels}>
             <Text style={styles.allocationLabel}>{item.label}</Text>
-            <Text style={[styles.allocationPercent, { color: item.color }]}>{item.pct}%</Text>
+            <Text style={[styles.allocationPercent, { color: colors[item.color] }]}>{item.pct}%</Text>
           </View>
           <View style={styles.allocationTrack}>
             <View
               style={[
                 styles.allocationFill,
-                { width: `${item.pct}%`, backgroundColor: item.color },
+                { width: `${item.pct}%`, backgroundColor: colors[item.color] },
               ]}
             />
           </View>
@@ -357,7 +427,7 @@ function ResultView({ result, onRestart }: { result: string; onRestart: () => vo
       ))}
 
       <Pressable
-        style={[styles.restartButton, { backgroundColor: info.color }]}
+        style={[styles.restartButton, { backgroundColor: colors.primary }]}
         onPress={onRestart}
       >
         <Text style={styles.restartText}>Refazer o Teste</Text>
@@ -366,9 +436,18 @@ function ResultView({ result, onRestart }: { result: string; onRestart: () => vo
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   screen: { flex: 1, backgroundColor: colors.bg0 },
   flex: { flex: 1 },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  savedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 12,
+  },
+  savedText: { color: colors.textMuted, fontSize: 12 },
   spacer: { flex: 1 },
 
   intro: { flex: 1, alignItems: 'center', padding: spacing.xl },
@@ -376,8 +455,7 @@ const styles = StyleSheet.create({
     marginTop: 24,
     color: colors.textPrimary,
     fontSize: 28,
-    fontWeight: '800',
-    letterSpacing: -0.8,
+    fontWeight: '600',
     lineHeight: 28 * 1.2,
     textAlign: 'center',
   },
@@ -391,35 +469,35 @@ const styles = StyleSheet.create({
   previewRow: { flexDirection: 'row', justifyContent: 'center', gap: 12, marginTop: 36 },
   preview: { alignItems: 'center' },
   previewIcon: {
-    width: 70,
-    height: 70,
+    width: 72,
+    height: 72,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: radius.lg,
     borderWidth: 1,
   },
-  previewLabel: { marginTop: 6, fontSize: 11, fontWeight: '600' },
+  previewLabel: { color: colors.textSecondary, marginTop: 8, fontSize: 11, fontWeight: '500' },
   introButton: { alignSelf: 'stretch', marginTop: 40 },
 
   quiz: { flex: 1, padding: spacing.xl },
   quizProgressRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  quizStep: { color: colors.textMuted, fontSize: 12, fontWeight: '600' },
-  quizPercent: { color: colors.primary, fontSize: 12, fontWeight: '700' },
+  quizStep: { color: colors.textMuted, fontSize: 12, fontWeight: '500' },
+  quizPercent: { color: colors.primary, fontSize: 12, fontWeight: '500' },
   progressTrack: {
-    height: 6,
+    height: 8,
     marginTop: 8,
     backgroundColor: colors.bg4,
     borderRadius: radius.pill,
     overflow: 'hidden',
   },
-  progressFill: { height: 6, backgroundColor: colors.primary, borderRadius: radius.pill },
+  progressFill: { height: 8, backgroundColor: colors.primary, borderRadius: radius.pill },
 
   question: {
     marginTop: 28,
     marginBottom: 24,
     color: colors.textPrimary,
     fontSize: 20,
-    fontWeight: '700',
+    fontWeight: '600',
     lineHeight: 20 * 1.4,
   },
   option: {
@@ -447,7 +525,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   optionLetterSelected: { backgroundColor: colors.primary },
-  optionLetterText: { color: colors.textMuted, fontSize: 13, fontWeight: '700' },
+  optionLetterText: { color: colors.textMuted, fontSize: 13, fontWeight: '500' },
   optionLetterTextSelected: { color: '#FFFFFF' },
   optionText: { flex: 1, color: colors.textSecondary, fontSize: 14 },
   optionTextSelected: { color: colors.textPrimary, fontWeight: '600' },
@@ -475,7 +553,7 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     borderWidth: 2,
   },
-  resultTitle: { marginTop: 16, fontSize: 26, fontWeight: '800' },
+  resultTitle: { marginTop: 16, color: colors.textPrimary, fontSize: 26, fontWeight: '600' },
   resultDescription: {
     marginTop: 8,
     color: colors.textSecondary,
@@ -499,20 +577,20 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     color: colors.textPrimary,
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '600',
   },
-  allocationRow: { alignSelf: 'stretch', marginBottom: 10 },
+  allocationRow: { alignSelf: 'stretch', marginBottom: 8 },
   allocationLabels: { flexDirection: 'row', justifyContent: 'space-between' },
-  allocationLabel: { color: colors.textSecondary, fontSize: 13, fontWeight: '600' },
-  allocationPercent: { fontSize: 13, fontWeight: '700' },
+  allocationLabel: { color: colors.textSecondary, fontSize: 13, fontWeight: '500' },
+  allocationPercent: { fontSize: 13, fontWeight: '500' },
   allocationTrack: {
-    height: 6,
+    height: 8,
     marginTop: 4,
     backgroundColor: colors.bg4,
     borderRadius: radius.pill,
     overflow: 'hidden',
   },
-  allocationFill: { height: 6, borderRadius: radius.pill },
+  allocationFill: { height: 8, borderRadius: radius.pill },
 
   restartButton: {
     alignSelf: 'stretch',
@@ -523,4 +601,4 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
   },
   restartText: { color: '#FFFFFF', fontSize: 15, fontWeight: '600' },
-});
+}));

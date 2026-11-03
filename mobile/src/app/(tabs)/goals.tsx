@@ -19,11 +19,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GoalCard } from '@/components/GoalCard';
 import { goalProgressPercent, goalRemaining, isGoalCompleted, type Goal } from '@/models';
 import { goalService } from '@/services';
-import { alpha, colors, gradients, radius } from '@/theme';
-import { currency } from '@/utils/formatters';
+import { alpha, makeStyles, radius } from '@/theme';
+import { currency, percentText } from '@/utils/formatters';
+import { useTheme } from '@/contexts/ThemeContext';
 
 /** Porte de lib/pages/goals_page.dart. */
 export default function GoalsScreen() {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const router = useRouter();
 
   const [goals, setGoals] = useState<Goal[]>([]);
@@ -125,7 +128,7 @@ export default function GoalsScreen() {
         onPress={() => router.push('/goals/new')}
         accessibilityLabel="Nova meta"
       >
-        <MaterialIcons name="add" size={26} color="#FFFFFF" />
+        <MaterialIcons name="add" size={24} color="#FFFFFF" />
       </Pressable>
 
       <AddProgressModal
@@ -149,6 +152,8 @@ function AddProgressModal({
   onCancel: () => void;
   onConfirm: (goal: Goal, amount: number) => void;
 }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const [text, setText] = useState('');
 
   if (!goal) return null;
@@ -171,7 +176,7 @@ function AddProgressModal({
         <Pressable style={styles.modalCard} onPress={(event) => event.stopPropagation()}>
           <Text style={styles.modalTitle}>Adicionar valor à &quot;{goal.title}&quot;</Text>
           <Text style={styles.modalHint}>
-            Progresso atual: {goalProgressPercent(goal).toFixed(1)}%
+            Progresso atual: {percentText(goalProgressPercent(goal), 1)}
           </Text>
 
           <View style={styles.modalInputRow}>
@@ -223,6 +228,8 @@ function GoalsHeader({
   overallProgress: number;
   isLoading: boolean;
 }) {
+  const styles = useStyles();
+  const { colors, gradients } = useTheme();
   const insets = useSafeAreaInsets();
 
   return (
@@ -230,7 +237,7 @@ function GoalsHeader({
       colors={gradients.header.colors}
       start={gradients.header.start}
       end={gradients.header.end}
-      style={[styles.header, { paddingTop: insets.top + 14 }]}
+      style={[styles.header, { paddingTop: insets.top + 16 }]}
     >
       <View style={styles.headerTop}>
         <Text style={styles.headerTitle}>Minhas Metas</Text>
@@ -249,12 +256,12 @@ function GoalsHeader({
         <View style={styles.progressCard}>
           <View style={styles.progressTopRow}>
             <Text style={styles.progressLabel}>Progresso Geral</Text>
-            <Text style={styles.progressPercent}>{(overallProgress * 100).toFixed(1)}%</Text>
+            <Text style={styles.progressPercent}>{percentText(overallProgress * 100, 1)}</Text>
           </View>
 
           <View style={styles.progressTrack}>
             <LinearGradient
-              colors={[colors.warning, '#FBBF24']}
+              colors={[colors.warning, colors.warning]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={[
@@ -279,7 +286,7 @@ function GoalsHeader({
         <View style={styles.hintCard}>
           <MaterialIcons name="lightbulb-outline" size={18} color={colors.textOnBlueDim} />
           <Text style={styles.hintText}>
-            Defina metas financeiras e acompanhe seu progresso.
+            Defina metas financeiras e acompanhe o progresso
           </Text>
         </View>
       )}
@@ -288,6 +295,8 @@ function GoalsHeader({
 }
 
 function EmptyState() {
+  const styles = useStyles();
+  const { colors } = useTheme();
   return (
     <View style={styles.emptyState}>
       <View style={styles.emptyIcon}>
@@ -301,7 +310,7 @@ function EmptyState() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   screen: { flex: 1, backgroundColor: colors.bg0 },
 
   header: {
@@ -316,18 +325,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 20,
   },
-  headerTitle: { color: colors.textOnBlue, fontSize: 22, fontWeight: '800' },
+  headerTitle: { color: colors.textOnBlue, fontSize: 22, fontWeight: '600' },
   headerBadge: {
     paddingHorizontal: 12,
-    paddingVertical: 5,
+    paddingVertical: 4,
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
     borderRadius: radius.pill,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.20)',
   },
-  headerBadgeText: { color: colors.textOnBlue, fontSize: 12, fontWeight: '600' },
+  headerBadgeText: { color: colors.textOnBlue, fontSize: 12, fontWeight: '500' },
   headerSkeleton: {
-    height: 110,
+    height: 112,
     backgroundColor: 'rgba(255, 255, 255, 0.12)',
     borderRadius: 20,
   },
@@ -341,7 +350,7 @@ const styles = StyleSheet.create({
   },
   progressTopRow: { flexDirection: 'row', justifyContent: 'space-between' },
   progressLabel: { color: colors.textOnBlueDim, fontSize: 13 },
-  progressPercent: { color: colors.textOnBlue, fontSize: 15, fontWeight: '700' },
+  progressPercent: { color: colors.textOnBlue, fontSize: 15, fontWeight: '600' },
   progressTrack: {
     height: 8,
     marginTop: 12,
@@ -360,7 +369,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
     color: colors.textOnBlue,
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   progressTarget: {
     marginTop: 2,
@@ -373,9 +382,9 @@ const styles = StyleSheet.create({
   hintCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingVertical: 16,
     backgroundColor: 'rgba(255, 255, 255, 0.13)',
     borderRadius: 16,
     borderWidth: 1,
@@ -393,20 +402,20 @@ const styles = StyleSheet.create({
 
   emptyState: { paddingVertical: 40, alignItems: 'center' },
   emptyIcon: {
-    padding: 22,
+    padding: 20,
     backgroundColor: alpha(colors.warning, 0.08),
     borderRadius: radius.pill,
     borderWidth: 1,
     borderColor: alpha(colors.warning, 0.18),
   },
   emptyTitle: {
-    marginTop: 18,
+    marginTop: 16,
     color: colors.textPrimary,
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   emptyBody: {
-    marginTop: 6,
+    marginTop: 8,
     color: colors.textSecondary,
     fontSize: 13,
     lineHeight: 13 * 1.5,
@@ -439,25 +448,25 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg2,
     borderRadius: radius.xl,
   },
-  modalTitle: { color: colors.textPrimary, fontSize: 15, fontWeight: '700' },
+  modalTitle: { color: colors.textPrimary, fontSize: 15, fontWeight: '600' },
   modalHint: { marginTop: 8, color: colors.textMuted, fontSize: 12 },
   modalInputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 14,
-    paddingHorizontal: 14,
+    marginTop: 12,
+    paddingHorizontal: 16,
     backgroundColor: colors.bg3,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
   },
-  modalPrefix: { color: colors.warning, fontWeight: '700', fontSize: 18 },
+  modalPrefix: { color: colors.warning, fontWeight: '600', fontSize: 18 },
   modalInput: {
     flex: 1,
     paddingVertical: 12,
     color: colors.textPrimary,
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   modalRemaining: { marginTop: 8, color: colors.textSecondary, fontSize: 12 },
   modalActions: {
@@ -467,8 +476,8 @@ const styles = StyleSheet.create({
     gap: 8,
     marginTop: 16,
   },
-  modalCancel: { paddingHorizontal: 12, paddingVertical: 10 },
-  modalCancelText: { color: colors.primary, fontSize: 14, fontWeight: '600' },
+  modalCancel: { paddingHorizontal: 12, paddingVertical: 12 },
+  modalCancelText: { color: colors.primary, fontSize: 14, fontWeight: '500' },
   modalConfirm: {
     height: 40,
     justifyContent: 'center',
@@ -476,5 +485,5 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     borderRadius: radius.md,
   },
-  modalConfirmText: { color: '#FFFFFF', fontSize: 14, fontWeight: '600' },
-});
+  modalConfirmText: { color: '#FFFFFF', fontSize: 14, fontWeight: '500' },
+}));

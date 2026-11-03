@@ -19,11 +19,13 @@ import { FieldLabel, PrimaryButton, ScreenHeader } from '@/components/form';
 import { Snackbar, useSnackbar } from '@/components/Snackbar';
 import type { AssetCategory, OperationType, PortfolioPosition } from '@/models';
 import { marketDataService, operationService } from '@/services';
-import { alpha, colors, radius, shadows } from '@/theme';
+import { alpha, makeStyles, radius, shadows } from '@/theme';
 import { assetHintFor, suggestAssets, type AssetOption } from '@/utils/assetCatalog';
 import { quantityLabel } from '@/utils/categories';
 import { currency } from '@/utils/formatters';
 import { calculatePortfolio } from '@/utils/portfolio';
+import { useTheme } from '@/contexts/ThemeContext';
+import { goBack } from '@/lib/navigation';
 
 /** Porte de lib/pages/add_operation_page.dart. */
 
@@ -36,6 +38,8 @@ const CATEGORIES: { key: AssetCategory; label: string }[] = [
 ];
 
 export default function AddOperationScreen() {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const router = useRouter();
   const { message, show } = useSnackbar();
 
@@ -217,8 +221,8 @@ export default function AddOperationScreen() {
         price: unitPrice,
         date,
       });
-      show('Operação registrada!');
-      router.back();
+      show('Operação registrada');
+      goBack(router, '/portfolio');
     } catch (err) {
       show(`Erro: ${err instanceof Error ? err.message : String(err)}`, { isError: true });
     } finally {
@@ -311,7 +315,7 @@ export default function AddOperationScreen() {
                       <Text style={styles.suggestionTicker}>{option.ticker}</Text>
                       <Text style={styles.suggestionName}>{option.name}</Text>
                     </View>
-                    <MaterialIcons name="north-west" size={14} color={colors.textMuted} />
+                    <MaterialIcons name="north-west" size={16} color={colors.textMuted} />
                   </Pressable>
                 ))}
               </View>
@@ -420,6 +424,7 @@ function TypeButton({
   selected: boolean;
   onPress: () => void;
 }) {
+  const styles = useStyles();
   return (
     <Pressable
       onPress={onPress}
@@ -433,22 +438,22 @@ function TypeButton({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   screen: { flex: 1, backgroundColor: colors.bg0 },
   flex: { flex: 1 },
   content: { padding: 20, paddingBottom: 40 },
 
-  typeRow: { flexDirection: 'row', gap: 10, marginTop: 8, marginBottom: 20 },
+  typeRow: { flexDirection: 'row', gap: 8, marginTop: 8, marginBottom: 20 },
   typeButton: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 13,
+    paddingVertical: 12,
     backgroundColor: colors.bg1,
     borderRadius: 14,
     borderWidth: 1,
     borderColor: colors.border,
   },
-  typeLabel: { color: colors.textSecondary, fontSize: 13, fontWeight: '700' },
+  typeLabel: { color: colors.textSecondary, fontSize: 13, fontWeight: '500' },
 
   select: {
     flexDirection: 'row',
@@ -457,7 +462,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 16,
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingVertical: 16,
     backgroundColor: colors.bg1,
     borderRadius: 14,
     borderWidth: 1,
@@ -469,7 +474,7 @@ const styles = StyleSheet.create({
   inputBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
     paddingHorizontal: 16,
     backgroundColor: colors.bg3,
     borderRadius: radius.lg,
@@ -484,12 +489,12 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     color: colors.textPrimary,
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   plainInput: { flex: 1, paddingVertical: 16, color: colors.textPrimary, fontSize: 14 },
-  priceInputAuto: { color: colors.profitDark, fontWeight: '700' },
-  errorText: { marginTop: 6, color: colors.loss, fontSize: 12 },
-  helperText: { marginTop: 6, color: colors.textSecondary, fontSize: 12 },
+  priceInputAuto: { color: colors.profitDark, fontWeight: '600' },
+  errorText: { marginTop: 8, color: colors.loss, fontSize: 12 },
+  helperText: { marginTop: 8, color: colors.textSecondary, fontSize: 12 },
 
   suggestions: {
     position: 'absolute',
@@ -518,19 +523,19 @@ const styles = StyleSheet.create({
     backgroundColor: alpha(colors.primary, 0.08),
     borderRadius: 8,
   },
-  suggestionBadgeText: { color: colors.primary, fontSize: 10, fontWeight: '800' },
-  suggestionTicker: { color: colors.textPrimary, fontSize: 14, fontWeight: '700' },
+  suggestionBadgeText: { color: colors.primary, fontSize: 10, fontWeight: '500' },
+  suggestionTicker: { color: colors.textPrimary, fontSize: 14, fontWeight: '500' },
   suggestionName: { color: colors.textSecondary, fontSize: 12 },
 
   row: { flexDirection: 'row', gap: 12, marginBottom: 16 },
-  priceLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  priceLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   autoBadge: {
-    paddingHorizontal: 6,
+    paddingHorizontal: 8,
     paddingVertical: 2,
     backgroundColor: alpha(colors.profit, 0.12),
     borderRadius: 4,
   },
-  autoBadgeText: { color: colors.profitDark, fontSize: 9, fontWeight: '700' },
+  autoBadgeText: { color: colors.profitDark, fontSize: 9, fontWeight: '500' },
 
   totalCard: {
     flexDirection: 'row',
@@ -538,14 +543,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: 24,
     marginBottom: 24,
-    padding: 16,
+    padding: 20,
     backgroundColor: alpha(colors.primary, 0.06),
     borderRadius: 14,
     borderWidth: 1,
     borderColor: alpha(colors.primary, 0.2),
   },
   totalLabel: { color: colors.textSecondary, fontSize: 13 },
-  totalValue: { color: colors.primary, fontSize: 16, fontWeight: '700' },
+  totalValue: { color: colors.primary, fontSize: 16, fontWeight: '600' },
 
   modalBackdrop: {
     flex: 1,
@@ -568,5 +573,5 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   modalItemText: { color: colors.textPrimary, fontSize: 14 },
-  modalItemActive: { color: colors.primary, fontWeight: '700' },
-});
+  modalItemActive: { color: colors.primary, fontWeight: '600' },
+}));

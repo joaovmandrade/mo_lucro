@@ -14,9 +14,12 @@ import {
   type Lesson,
 } from '@/data/knowledge';
 import { useKnowledgeProgress } from '@/lib/knowledgeProgress';
-import { alpha, colors, gradients, radius, shadows } from '@/theme';
+import { alpha, makeStyles, radius, shadows, type Palette } from '@/theme';
+import { useTheme } from '@/contexts/ThemeContext';
 
 export default function LessonScreen() {
+  const styles = useStyles();
+  const { colors, gradients } = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ id: string }>();
@@ -61,7 +64,7 @@ export default function LessonScreen() {
           colors={gradients.header.colors}
           start={gradients.header.start}
           end={gradients.header.end}
-          style={[styles.header, { paddingTop: insets.top + 12 }]}
+          style={[styles.header, { paddingTop: insets.top + 16 }]}
         >
           <View style={styles.headerTopRow}>
             <Pressable style={styles.circleButton} onPress={goBack} accessibilityLabel="Voltar">
@@ -77,12 +80,12 @@ export default function LessonScreen() {
 
           <View style={styles.pills}>
             <View style={styles.pill}>
-              <MaterialIcons name="schedule" size={13} color={colors.textOnBlue} />
+              <MaterialIcons name="schedule" size={16} color={colors.textOnBlue} />
               <Text style={styles.pillText}>{lesson.minutes} min de leitura</Text>
             </View>
             {done ? (
               <View style={[styles.pill, styles.pillDone]}>
-                <MaterialIcons name="check" size={13} color={colors.textOnBlue} />
+                <MaterialIcons name="check" size={16} color={colors.textOnBlue} />
                 <Text style={styles.pillText}>Concluída</Text>
               </View>
             ) : null}
@@ -114,7 +117,7 @@ export default function LessonScreen() {
                 {done ? 'Aula concluída' : 'Marcar como concluída'}
               </Text>
             </Pressable>
-            {done ? <Text style={styles.undoHint}>Toque de novo para desmarcar.</Text> : null}
+            {done ? <Text style={styles.undoHint}>Toque de novo para desmarcar</Text> : null}
 
             {lesson.cta ? (
               <Pressable
@@ -149,16 +152,35 @@ export default function LessonScreen() {
 // ─────────────────────────────────────────────────────────────
 // Blocos de conteúdo
 // ─────────────────────────────────────────────────────────────
-const TONES: Record<
-  'tip' | 'warning' | 'example',
-  { color: string; textColor: string; icon: IconName; title: string }
-> = {
-  tip: { color: colors.primary, textColor: colors.primaryDim, icon: 'lightbulb-outline', title: 'Dica' },
-  warning: { color: colors.warning, textColor: '#B45309', icon: 'warning', title: 'Atenção' },
-  example: { color: colors.profit, textColor: colors.profitDark, icon: 'calculate', title: 'Exemplo' },
-};
+type Tone = { color: string; textColor: string; icon: IconName; title: string };
+
+/** Cores dos destaques da aula, conforme o tema (no escuro o texto fica mais claro). */
+function tones(colors: Palette, isDark: boolean): Record<'tip' | 'warning' | 'example', Tone> {
+  return {
+    tip: {
+      color: colors.primary,
+      textColor: isDark ? '#93C5FD' : colors.primaryDim,
+      icon: 'lightbulb-outline',
+      title: 'Dica',
+    },
+    warning: {
+      color: colors.warning,
+      textColor: isDark ? '#FCD34D' : '#B45309',
+      icon: 'warning',
+      title: 'Atenção',
+    },
+    example: {
+      color: colors.profit,
+      textColor: isDark ? '#6EE7B7' : colors.profitDark,
+      icon: 'calculate',
+      title: 'Exemplo',
+    },
+  };
+}
 
 function BlockView({ block, first }: { block: Block; first: boolean }) {
+  const styles = useStyles();
+  const { colors, isDark } = useTheme();
   switch (block.type) {
     case 'p':
       return <Text style={[styles.paragraph, first && styles.noTop]}>{block.text}</Text>;
@@ -183,7 +205,7 @@ function BlockView({ block, first }: { block: Block; first: boolean }) {
       );
 
     case 'callout': {
-      const tone = TONES[block.tone];
+      const tone = tones(colors, isDark)[block.tone];
       return (
         <View
           style={[
@@ -256,6 +278,8 @@ function BlockView({ block, first }: { block: Block; first: boolean }) {
 }
 
 function NextLessonCard({ lesson, onPress }: { lesson: Lesson; onPress: () => void }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   return (
     <Pressable
       onPress={onPress}
@@ -268,19 +292,19 @@ function NextLessonCard({ lesson, onPress }: { lesson: Lesson; onPress: () => vo
         <Text style={styles.nextTitle}>{lesson.title}</Text>
         <Text style={styles.nextMeta}>{lesson.minutes} min de leitura</Text>
       </View>
-      <MaterialIcons name="chevron-right" size={22} color={colors.textMuted} />
+      <MaterialIcons name="chevron-right" size={20} color={colors.textMuted} />
     </Pressable>
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   screen: { flex: 1, backgroundColor: colors.bg0 },
   scrollContent: { paddingBottom: 40 },
 
   // Cabeçalho
   header: {
     paddingHorizontal: 20,
-    paddingBottom: 26,
+    paddingBottom: 24,
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,
   },
@@ -293,8 +317,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.18)',
     borderRadius: 18,
   },
-  headerTrack: { flex: 1, color: colors.textOnBlueDim, fontSize: 14, fontWeight: '600' },
-  title: { color: colors.textOnBlue, fontSize: 26, fontWeight: '800', lineHeight: 26 * 1.15 },
+  headerTrack: { flex: 1, color: colors.textOnBlueDim, fontSize: 14, fontWeight: '500' },
+  title: { color: colors.textOnBlue, fontSize: 26, fontWeight: '600', lineHeight: 26 * 1.15 },
   summary: {
     marginTop: 8,
     color: colors.textOnBlueDim,
@@ -305,23 +329,23 @@ const styles = StyleSheet.create({
   pill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
+    gap: 4,
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 8,
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
     borderRadius: radius.pill,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.20)',
   },
   pillDone: { backgroundColor: 'rgba(16, 185, 129, 0.35)', borderColor: 'rgba(110, 231, 183, 0.5)' },
-  pillText: { color: colors.textOnBlue, fontSize: 12, fontWeight: '600' },
+  pillText: { color: colors.textOnBlue, fontSize: 12, fontWeight: '500' },
 
   // Corpo
   body: { paddingHorizontal: 20, paddingTop: 24 },
   noTop: { marginTop: 0 },
 
   paragraph: {
-    marginTop: 14,
+    marginTop: 12,
     color: colors.textPrimary,
     fontSize: 15,
     lineHeight: 15 * 1.6,
@@ -331,28 +355,28 @@ const styles = StyleSheet.create({
     marginBottom: -2,
     color: colors.textPrimary,
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '600',
   },
 
-  list: { marginTop: 14, gap: 10 },
+  list: { marginTop: 12, gap: 8 },
   listItem: { flexDirection: 'row', gap: 12 },
   bullet: {
-    width: 6,
-    height: 6,
-    marginTop: 9,
+    width: 8,
+    height: 8,
+    marginTop: 8,
     backgroundColor: colors.primary,
     borderRadius: radius.pill,
   },
   listText: { flex: 1, color: colors.textPrimary, fontSize: 15, lineHeight: 15 * 1.55 },
 
   callout: {
-    marginTop: 18,
+    marginTop: 16,
     padding: 16,
     borderRadius: radius.lg,
     borderWidth: 1,
   },
-  calloutHeader: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  calloutTitle: { fontSize: 13, fontWeight: '700' },
+  calloutHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  calloutTitle: { fontSize: 13, fontWeight: '500' },
   calloutText: {
     marginTop: 8,
     color: colors.textPrimary,
@@ -369,17 +393,17 @@ const styles = StyleSheet.create({
     boxShadow: shadows.card,
     overflow: 'hidden',
   },
-  tableRow: { flexDirection: 'row', gap: 12, paddingHorizontal: 14, paddingVertical: 12 },
+  tableRow: { flexDirection: 'row', gap: 12, paddingHorizontal: 16, paddingVertical: 12 },
   tableHead: { backgroundColor: colors.bg3 },
   tableRowDivider: { borderBottomWidth: 1, borderBottomColor: colors.borderLight },
   tableCell: { flex: 1, color: colors.textSecondary, fontSize: 13, lineHeight: 13 * 1.4 },
-  tableHeadText: { color: colors.textSecondary, fontSize: 12, fontWeight: '700' },
-  tableFirstCell: { color: colors.textPrimary, fontWeight: '700' },
+  tableHeadText: { color: colors.textSecondary, fontSize: 12, fontWeight: '500' },
+  tableFirstCell: { color: colors.textPrimary, fontWeight: '600' },
 
-  termRow: { paddingHorizontal: 14, paddingVertical: 13 },
-  termName: { color: colors.textPrimary, fontSize: 14, fontWeight: '700' },
+  termRow: { paddingHorizontal: 16, paddingVertical: 12 },
+  termName: { color: colors.textPrimary, fontSize: 14, fontWeight: '500' },
   termDefinition: {
-    marginTop: 3,
+    marginTop: 4,
     color: colors.textSecondary,
     fontSize: 14,
     lineHeight: 14 * 1.5,
@@ -388,18 +412,18 @@ const styles = StyleSheet.create({
   calculatorWrap: { marginTop: 16 },
 
   // Ações no fim da aula
-  actions: { marginTop: 32, gap: 10 },
+  actions: { marginTop: 32, gap: 8 },
   primaryButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    height: 50,
+    height: 48,
     paddingHorizontal: 20,
     backgroundColor: colors.primary,
     borderRadius: radius.lg,
   },
-  primaryButtonText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
+  primaryButtonText: { color: '#FFFFFF', fontSize: 15, fontWeight: '600' },
   doneButton: {
     backgroundColor: alpha(colors.profit, 0.12),
     borderWidth: 1,
@@ -414,20 +438,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    height: 50,
+    height: 48,
     backgroundColor: colors.bg1,
     borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: alpha(colors.primary, 0.35),
   },
-  secondaryButtonText: { color: colors.primary, fontSize: 15, fontWeight: '700' },
+  secondaryButtonText: { color: colors.primary, fontSize: 15, fontWeight: '600' },
 
   nextCard: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     marginTop: 24,
-    padding: 16,
+    padding: 20,
     backgroundColor: colors.bg1,
     borderRadius: radius.xl,
     borderWidth: 1,
@@ -435,9 +459,9 @@ const styles = StyleSheet.create({
     boxShadow: shadows.card,
   },
   nextText: { flex: 1 },
-  nextLabel: { color: colors.primary, fontSize: 12, fontWeight: '700' },
-  nextTitle: { marginTop: 2, color: colors.textPrimary, fontSize: 16, fontWeight: '700' },
-  nextMeta: { marginTop: 3, color: colors.textSecondary, fontSize: 12 },
+  nextLabel: { color: colors.primary, fontSize: 12, fontWeight: '500' },
+  nextTitle: { marginTop: 2, color: colors.textPrimary, fontSize: 16, fontWeight: '600' },
+  nextMeta: { marginTop: 4, color: colors.textSecondary, fontSize: 12 },
 
   disclaimer: {
     marginTop: 28,
@@ -449,7 +473,7 @@ const styles = StyleSheet.create({
 
   // Aula inexistente
   missing: { alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32, gap: 8 },
-  missingTitle: { marginTop: 8, color: colors.textPrimary, fontSize: 18, fontWeight: '700' },
+  missingTitle: { marginTop: 8, color: colors.textPrimary, fontSize: 18, fontWeight: '600' },
   missingBody: {
     marginBottom: 16,
     color: colors.textSecondary,
@@ -457,4 +481,4 @@ const styles = StyleSheet.create({
     lineHeight: 14 * 1.5,
     textAlign: 'center',
   },
-});
+}));

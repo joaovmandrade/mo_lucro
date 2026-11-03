@@ -1,4 +1,4 @@
-import { Ionicons, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
@@ -7,15 +7,20 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AssetCard } from '@/components/AssetCard';
 import { PatrimonioLineChart } from '@/components/PatrimonioLineChart';
-import { useAuth } from '@/contexts/AuthContext';
 import type { Operation } from '@/models';
-import { operationService, transactionService } from '@/services';
-import { alpha, colors, gradients, radius, shadows } from '@/theme';
+import { operationService, profileService, transactionService } from '@/services';
+import type { InvestorProfile } from '@/services/profileService';
+import { alpha, makeStyles, radius, shadows } from '@/theme';
+import { motion } from '@/theme/motion';
+import { patrimonyHistory, type PatrimonyPoint } from '@/utils/finance';
 import { currency } from '@/utils/formatters';
 import { calculatePortfolio, totalInvested } from '@/utils/portfolio';
+import { useTheme } from '@/contexts/ThemeContext';
 
 /** Porte de lib/pages/home_page.dart (DashboardPage). */
 export default function DashboardScreen() {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const router = useRouter();
 
   const [operations, setOperations] = useState<Operation[]>([]);
@@ -23,6 +28,7 @@ export default function DashboardScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [profile, setProfile] = useState<InvestorProfile | null>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -36,6 +42,7 @@ export default function DashboardScreen() {
       );
       setOperations(ops);
       setMonthSummary(summary);
+      profileService.getProfile().then(setProfile).catch(() => setProfile(null));
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -63,8 +70,6 @@ export default function DashboardScreen() {
   const { income, expense } = monthSummary;
   const available = income - expense;
   const total = invested + available;
-  const returnAmount = income > expense ? income - expense : 0;
-  const growth = invested > 0 ? (returnAmount / invested) * 100 : 0;
 
   return (
     <ScrollView
@@ -83,9 +88,9 @@ export default function DashboardScreen() {
       <BlueHeader
         total={total}
         invested={invested}
-        growth={growth}
-        returnAmount={returnAmount}
+        monthBalance={available}
         assetCount={positions.length}
+        operationCount={operations.length}
         isLoading={loading}
         onRefresh={loadData}
       />
@@ -98,9 +103,11 @@ export default function DashboardScreen() {
           onMeta={() => router.push('/goals/new')}
         />
 
+        <ProfileCard profile={profile} onPress={() => router.push('/profile')} />
+
         <DicaCard />
 
-        <ChartSection isLoading={loading} totalInvested={invested} />
+        <ChartSection isLoading={loading} points={patrimonyHistory(operations)} />
 
         <SectionTitle
           title="Minhas Posições"
@@ -122,13 +129,6 @@ export default function DashboardScreen() {
           positions.map((position) => <AssetCard key={position.asset} position={position} />)
         )}
 
-        <Pressable
-          style={({ pressed }) => [styles.primaryButton, pressed && styles.primaryButtonPressed]}
-          onPress={() => router.push('/operations/new')}
-        >
-          <MaterialIcons name="add" size={20} color="#FFFFFF" />
-          <Text style={styles.primaryButtonLabel}>Nova Operação</Text>
-        </Pressable>
       </View>
     </ScrollView>
   );
@@ -140,21 +140,23 @@ export default function DashboardScreen() {
 function BlueHeader({
   total,
   invested,
-  growth,
-  returnAmount,
+  monthBalance,
   assetCount,
+  operationCount,
   isLoading,
   onRefresh,
 }: {
   total: number;
   invested: number;
-  growth: number;
-  returnAmount: number;
+  monthBalance: number;
   assetCount: number;
+  operationCount: number;
   isLoading: boolean;
   onRefresh: () => void;
 }) {
-  const { signOut } = useAuth();
+  const styles = useStyles();
+  const { gradients } = useTheme();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
 
   return (
@@ -162,12 +164,12 @@ function BlueHeader({
       colors={gradients.header.colors}
       start={gradients.header.start}
       end={gradients.header.end}
-      style={[styles.header, { paddingTop: insets.top + 12 }]}
+      style={[styles.header, { paddingTop: insets.top + 16 }]}
     >
       <View style={styles.headerTop}>
         <View style={styles.logoRow}>
           <View style={styles.logoBox}>
-            <MaterialCommunityIcons name="chart-bar" size={20} color="#FFFFFF" />
+            <MaterialIcons name="bar-chart" size={20} color="#FFFFFF" />
           </View>
           <Text style={styles.logoText}>
             Mo<Text style={styles.logoTextAccent}>Lucro</Text>
@@ -176,7 +178,11 @@ function BlueHeader({
 
         <View style={styles.headerActions}>
           <HeaderIconButton icon="refresh" onPress={onRefresh} label="Atualizar" />
-          <HeaderIconButton icon="logout" onPress={signOut} label="Sair" />
+          <HeaderIconButton
+            icon="settings"
+            onPress={() => router.push('/settings')}
+            label="Configurações"
+          />
         </View>
       </View>
 
@@ -187,15 +193,14 @@ function BlueHeader({
           <PatrimonioBody
             total={total}
             invested={invested}
-            growth={growth}
-            returnAmount={returnAmount}
+            monthBalance={monthBalance}
           />
         )}
       </View>
 
       <View style={styles.miniStats}>
-        <MiniStat label="Streak" value="7 dias 🔥" />
-        <MiniStat label="Ativos" value={`${assetCount} ativos`} />
+        <MiniStat label="Operações" value={`${operationCount} ${operationCount === 1 ? 'registrada' : 'registradas'}`} />
+        <MiniStat label="Ativos" value={`${assetCount} ${assetCount === 1 ? 'ativo' : 'ativos'}`} />
       </View>
     </LinearGradient>
   );
@@ -210,6 +215,7 @@ function HeaderIconButton({
   onPress: () => void;
   label: string;
 }) {
+  const styles = useStyles();
   return (
     <Pressable style={styles.headerIconButton} onPress={onPress} accessibilityLabel={label}>
       <MaterialIcons name={icon} size={18} color="#FFFFFF" />
@@ -220,15 +226,15 @@ function HeaderIconButton({
 function PatrimonioBody({
   total,
   invested,
-  growth,
-  returnAmount,
+  monthBalance,
 }: {
   total: number;
   invested: number;
-  growth: number;
-  returnAmount: number;
+  /** Receitas menos despesas do mês corrente (aba Transações). */
+  monthBalance: number;
 }) {
-  const isPositive = growth >= 0;
+  const styles = useStyles();
+  const { colors } = useTheme();
 
   return (
     <View>
@@ -243,35 +249,38 @@ function PatrimonioBody({
           <Text style={styles.investedValue}>{currency(invested)}</Text>
         </View>
 
-        <View style={styles.growthBadge}>
-          <Text style={styles.growthText}>
-            {isPositive ? '+' : ''}
-            {growth.toFixed(2)}%
+        <View style={styles.balanceColumn}>
+          <Text style={styles.investedLabel}>Saldo do mês</Text>
+          <Text
+            style={[
+              styles.investedValue,
+              { color: monthBalance < 0 ? '#FCA5A5' : colors.textOnBlueReturn },
+            ]}
+          >
+            {currency(monthBalance)}
           </Text>
         </View>
       </View>
-
-      {returnAmount > 0 ? (
-        <Text style={styles.returnText}>Retorno: {currency(returnAmount)}</Text>
-      ) : null}
     </View>
   );
 }
 
 function PatrimonioSkeleton() {
+  const styles = useStyles();
   return (
     <View>
-      <View style={[styles.skeletonBox, { width: 110, height: 13 }]} />
-      <View style={[styles.skeletonBox, { width: 200, height: 30, marginTop: 10 }]} />
+      <View style={[styles.skeletonBox, { width: 112, height: 12 }]} />
+      <View style={[styles.skeletonBox, { width: 200, height: 32, marginTop: 8 }]} />
       <View style={styles.skeletonRow}>
         <View style={[styles.skeletonBox, { width: 100, height: 36 }]} />
-        <View style={[styles.skeletonBox, { width: 70, height: 28 }]} />
+        <View style={[styles.skeletonBox, { width: 72, height: 28 }]} />
       </View>
     </View>
   );
 }
 
 function MiniStat({ label, value }: { label: string; value: string }) {
+  const styles = useStyles();
   return (
     <View style={styles.miniStat}>
       <Text style={styles.miniStatLabel}>{label}</Text>
@@ -294,27 +303,29 @@ function QuickActions({
   onNoticias: () => void;
   onMeta: () => void;
 }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   return (
     <View style={styles.quickActions}>
       <QuickButton
-        icon="chart-box-plus-outline"
+        icon="add-chart"
         label="Aportar"
         color={colors.primary}
         onPress={onAportar}
       />
       <QuickButton
-        icon="calculator-variant"
+        icon="calculate"
         label="Simular"
-        color={colors.purple}
+        color={colors.primary}
         onPress={onSimular}
       />
       <QuickButton
-        icon="newspaper-variant"
+        icon="newspaper"
         label="Notícias"
-        color={colors.accentTeal}
+        color={colors.primary}
         onPress={onNoticias}
       />
-      <QuickButton icon="flag" label="Metas" color={colors.warning} onPress={onMeta} />
+      <QuickButton icon="flag" label="Metas" color={colors.primary} onPress={onMeta} />
     </View>
   );
 }
@@ -325,27 +336,72 @@ function QuickButton({
   color,
   onPress,
 }: {
-  icon: keyof typeof MaterialCommunityIcons.glyphMap;
+  icon: keyof typeof MaterialIcons.glyphMap;
   label: string;
   color: string;
   onPress: () => void;
 }) {
+  const styles = useStyles();
   return (
-    <Pressable onPress={onPress} style={styles.quickButton}>
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [styles.quickButton, pressed && styles.quickButtonPressed]}
+    >
       <View style={styles.quickButtonBox}>
-        <MaterialCommunityIcons name={icon} size={26} color={color} />
+        <MaterialIcons name={icon} size={24} color={color} />
       </View>
       <Text style={styles.quickButtonLabel}>{label}</Text>
     </Pressable>
   );
 }
 
+// ── Perfil do investidor ─────────────────────────────────────
+const PROFILE_TITLES: Record<InvestorProfile['profile'], string> = {
+  conservative: 'Conservador',
+  moderate: 'Moderado',
+  aggressive: 'Arrojado',
+};
+
+function ProfileCard({
+  profile,
+  onPress,
+}: {
+  profile: InvestorProfile | null;
+  onPress: () => void;
+}) {
+  const styles = useStyles();
+  const { colors } = useTheme();
+  return (
+    <Pressable
+      style={({ pressed }) => [styles.profileCard, pressed && styles.cardPressed]}
+      onPress={onPress}
+    >
+      <View style={[styles.profileIcon, { backgroundColor: alpha(colors.primary, 0.12) }]}>
+        <MaterialIcons name="person-search" size={20} color={colors.primary} />
+      </View>
+      <View style={styles.dicaBody}>
+        <Text style={styles.profileTitle}>
+          {profile ? `Perfil ${PROFILE_TITLES[profile.profile]}` : 'Qual é o seu perfil de investidor?'}
+        </Text>
+        <Text style={styles.profileText}>
+          {profile
+            ? 'Veja a alocação recomendada ou refaça o questionário'
+            : 'Responda 6 perguntas e receba uma alocação de referência'}
+        </Text>
+      </View>
+      <MaterialIcons name="chevron-right" size={20} color={colors.textMuted} />
+    </Pressable>
+  );
+}
+
 // ── Dica do dia ──────────────────────────────────────────────
 function DicaCard() {
+  const styles = useStyles();
+  const { colors } = useTheme();
   return (
     <View style={styles.dicaCard}>
       <View style={styles.dicaIcon}>
-        <MaterialCommunityIcons name="lightbulb" size={22} color="#FFFFFF" />
+        <MaterialIcons name="lightbulb-outline" size={20} color={colors.textSecondary} />
       </View>
 
       <View style={styles.dicaBody}>
@@ -356,7 +412,7 @@ function DicaCard() {
           </View>
         </View>
         <Text style={styles.dicaText}>
-          Diversificação é a chave para reduzir riscos no seu portfólio.
+          Distribuir o dinheiro entre classes de ativos reduz o impacto de uma queda isolada
         </Text>
       </View>
     </View>
@@ -364,20 +420,15 @@ function DicaCard() {
 }
 
 // ── Gráfico ──────────────────────────────────────────────────
-function ChartSection({
-  isLoading,
-  totalInvested,
-}: {
-  isLoading: boolean;
-  totalInvested: number;
-}) {
+function ChartSection({ isLoading, points }: { isLoading: boolean; points: PatrimonyPoint[] }) {
+  const styles = useStyles();
   return (
     <View style={styles.chartCard}>
       <View style={styles.chartHeader}>
         <Text style={styles.chartTitle}>Evolução do Patrimônio</Text>
-        <Text style={styles.chartAction}>Ver mais</Text>
+        <Text style={styles.chartAction}>Valor investido nos últimos 6 meses</Text>
       </View>
-      <PatrimonioLineChart isLoading={isLoading} totalInvested={totalInvested} />
+      <PatrimonioLineChart isLoading={isLoading} points={points} />
     </View>
   );
 }
@@ -394,6 +445,7 @@ function SectionTitle({
   action?: string | null;
   onActionPress?: () => void;
 }) {
+  const styles = useStyles();
   return (
     <View style={styles.sectionTitle}>
       <Text style={styles.sectionTitleText}>{title}</Text>
@@ -409,9 +461,11 @@ function SectionTitle({
 }
 
 function EmptyState({ onAdd }: { onAdd: () => void }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   return (
     <Pressable style={styles.emptyState} onPress={onAdd}>
-      <Ionicons name="wallet-outline" size={40} color={colors.textMuted} />
+      <MaterialIcons name="account-balance-wallet" size={40} color={colors.textMuted} />
       <Text style={styles.emptyText}>
         Nenhum ativo ainda.{'\n'}Adicione sua primeira operação!
       </Text>
@@ -423,6 +477,7 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
 }
 
 function ErrorBanner({ message }: { message: string }) {
+  const styles = useStyles();
   return (
     <View style={styles.errorBanner}>
       <Text style={styles.errorText}>{message}</Text>
@@ -430,7 +485,7 @@ function ErrorBanner({ message }: { message: string }) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   screen: { flex: 1, backgroundColor: colors.bg0 },
   scrollContent: { paddingBottom: 12 },
 
@@ -451,12 +506,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.20)',
     borderRadius: 10,
   },
-  logoText: { marginLeft: 10, color: '#FFFFFF', fontSize: 18, fontWeight: '800' },
+  logoText: { marginLeft: 8, color: '#FFFFFF', fontSize: 18, fontWeight: '600' },
   logoTextAccent: { color: '#BFDBFE' },
   headerActions: { flexDirection: 'row', gap: 8 },
   headerIconButton: {
-    width: 38,
-    height: 38,
+    width: 40,
+    height: 40,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
@@ -478,26 +533,17 @@ const styles = StyleSheet.create({
     marginTop: 4,
     color: colors.textOnBlue,
     fontSize: 32,
-    fontWeight: '800',
+    fontWeight: '600',
   },
+  balanceColumn: { alignItems: 'flex-end' },
   patrimonioRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 14,
+    marginTop: 12,
   },
   investedLabel: { color: colors.textOnBlueDim, fontSize: 12 },
-  investedValue: { marginTop: 2, color: colors.textOnBlue, fontSize: 16, fontWeight: '700' },
-  growthBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    backgroundColor: alpha(colors.profit, 0.2),
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: alpha(colors.profit, 0.35),
-  },
-  growthText: { color: colors.textOnBlueProfit, fontSize: 13, fontWeight: '700' },
-  returnText: { marginTop: 6, color: colors.textOnBlueReturn, fontSize: 13 },
+  investedValue: { marginTop: 2, color: colors.textOnBlue, fontSize: 16, fontWeight: '600' },
 
   skeletonBox: { backgroundColor: 'rgba(255, 255, 255, 0.10)', borderRadius: 6 },
   skeletonRow: {
@@ -507,7 +553,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
 
-  miniStats: { flexDirection: 'row', gap: 12, marginTop: 14 },
+  miniStats: { flexDirection: 'row', gap: 12, marginTop: 12 },
   miniStat: {
     flex: 1,
     paddingHorizontal: 16,
@@ -518,7 +564,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.18)',
   },
   miniStatLabel: { color: colors.textOnBlueDim, fontSize: 12 },
-  miniStatValue: { marginTop: 4, color: colors.textOnBlue, fontSize: 17, fontWeight: '700' },
+  miniStatValue: { marginTop: 4, color: colors.textOnBlue, fontSize: 17, fontWeight: '600' },
 
   // Corpo branco
   body: { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 20 },
@@ -530,8 +576,8 @@ const styles = StyleSheet.create({
   },
   quickButton: { alignItems: 'center' },
   quickButtonBox: {
-    width: 62,
-    height: 62,
+    width: 64,
+    height: 64,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.bg1,
@@ -541,65 +587,83 @@ const styles = StyleSheet.create({
     boxShadow: shadows.card,
   },
   quickButtonLabel: {
-    marginTop: 7,
+    marginTop: 8,
     color: colors.textSecondary,
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '500',
   },
+
+  profileCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 12,
+    padding: 20,
+    backgroundColor: colors.bg2,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  cardPressed: { backgroundColor: colors.surfacePressed },
+  quickButtonPressed: { opacity: 0.8, transform: [{ scale: motion.pressScale }] },
+  profileIcon: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.md,
+  },
+  profileTitle: { color: colors.textPrimary, fontSize: 14, fontWeight: '500' },
+  profileText: { marginTop: 2, color: colors.textSecondary, fontSize: 12 },
 
   dicaCard: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     marginBottom: 20,
-    padding: 16,
-    backgroundColor: '#EFF6FF',
+    padding: 20,
+    backgroundColor: colors.bg2,
     borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: '#BFDBFE',
+    borderColor: colors.border,
   },
   dicaIcon: {
     width: 44,
     height: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#2563EB',
+    backgroundColor: colors.bg3,
     borderRadius: 12,
   },
   dicaBody: { flex: 1, marginLeft: 12 },
   dicaTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  dicaTitle: { color: '#1E3A8A', fontSize: 14, fontWeight: '700' },
+  dicaTitle: { color: colors.textPrimary, fontSize: 14, fontWeight: '500' },
   dicaTag: {
-    paddingHorizontal: 7,
+    paddingHorizontal: 8,
     paddingVertical: 2,
-    backgroundColor: alpha('#2563EB', 0.12),
+    backgroundColor: alpha(colors.primary, 0.12),
     borderRadius: radius.pill,
   },
-  dicaTagText: { color: '#1D4ED8', fontSize: 10, fontWeight: '600' },
-  dicaText: { marginTop: 4, color: '#1E40AF', fontSize: 12, lineHeight: 12 * 1.4 },
+  dicaTagText: { color: colors.primary, fontSize: 10, fontWeight: '500' },
+  dicaText: { marginTop: 4, color: colors.textSecondary, fontSize: 12, lineHeight: 12 * 1.4 },
 
   chartCard: {
     marginBottom: 20,
-    padding: 16,
+    padding: 20,
     backgroundColor: colors.bg1,
     borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.border,
     boxShadow: shadows.card,
   },
-  chartHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  chartTitle: { color: colors.textPrimary, fontSize: 15, fontWeight: '700' },
-  chartAction: { color: colors.primary, fontSize: 12, fontWeight: '600' },
+  chartHeader: { gap: 2, marginBottom: 12 },
+  chartTitle: { color: colors.textPrimary, fontSize: 15, fontWeight: '600' },
+  chartAction: { color: colors.textMuted, fontSize: 11, fontWeight: '500' },
 
-  sectionTitle: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
-  sectionTitleText: { color: colors.textPrimary, fontSize: 17, fontWeight: '700' },
+  sectionTitle: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+  sectionTitleText: { color: colors.textPrimary, fontSize: 17, fontWeight: '600' },
   sectionSubtitle: { marginLeft: 8, color: colors.textMuted, fontSize: 12 },
   spacer: { flex: 1 },
-  sectionAction: { color: colors.primary, fontSize: 13, fontWeight: '600' },
+  sectionAction: { color: colors.primary, fontSize: 13, fontWeight: '500' },
 
   skeletonCard: {
     height: 100,
@@ -629,16 +693,16 @@ const styles = StyleSheet.create({
   emptyButton: {
     marginTop: 16,
     paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingVertical: 12,
     backgroundColor: alpha(colors.primary, 0.08),
     borderRadius: 20,
     borderWidth: 1,
     borderColor: alpha(colors.primary, 0.2),
   },
-  emptyButtonText: { color: colors.primary, fontSize: 13, fontWeight: '700' },
+  emptyButtonText: { color: colors.primary, fontSize: 13, fontWeight: '500' },
 
   errorBanner: {
-    padding: 14,
+    padding: 16,
     backgroundColor: alpha(colors.loss, 0.06),
     borderRadius: radius.md,
     borderWidth: 1,
@@ -646,16 +710,4 @@ const styles = StyleSheet.create({
   },
   errorText: { color: colors.loss, fontSize: 13 },
 
-  primaryButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    height: 52,
-    marginTop: 16,
-    backgroundColor: colors.primary,
-    borderRadius: radius.lg,
-  },
-  primaryButtonPressed: { backgroundColor: colors.primaryDim },
-  primaryButtonLabel: { color: '#FFFFFF', fontSize: 15, fontWeight: '600' },
-});
+}));

@@ -1,6 +1,7 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -16,7 +17,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { newsService } from '@/services';
 import type { NewsItem } from '@/services/newsService';
-import { alpha, colors, gradients, radius, spacing } from '@/theme';
+import { alpha, makeStyles, radius, spacing } from '@/theme';
+import { useTheme } from '@/contexts/ThemeContext';
+import { goBack } from '@/lib/navigation';
 
 /** Porte de lib/pages/market_news_page.dart. */
 
@@ -44,6 +47,8 @@ function categoryLabel(category: string): string {
 }
 
 export default function NewsScreen() {
+  const styles = useStyles();
+  const { colors, gradients } = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -85,12 +90,12 @@ export default function NewsScreen() {
         colors={gradients.header.colors}
         start={gradients.header.start}
         end={gradients.header.end}
-        style={[styles.header, { paddingTop: insets.top + 12 }]}
+        style={[styles.header, { paddingTop: insets.top + 16 }]}
       >
         <View style={styles.headerCard}>
           <Pressable
             style={styles.circleButton}
-            onPress={() => router.back()}
+            onPress={() => goBack(router)}
             accessibilityLabel="Voltar"
           >
             <MaterialIcons name="arrow-back-ios-new" size={16} color={colors.textOnBlue} />
@@ -150,6 +155,15 @@ export default function NewsScreen() {
           <EmptyState onRetry={() => load(filter)} />
         ) : (
           <>
+            {news.some((item) => item.isSample) ? (
+              <View style={styles.sampleBanner}>
+                <MaterialIcons name="info-outline" size={16} color={colors.warning} />
+                <Text style={styles.sampleText}>
+                  Sem conexão com a fonte de notícias. Exibindo exemplos
+                </Text>
+              </View>
+            ) : null}
+
             {featured ? (
               <FeaturedCard item={featured} onPress={() => setDetail(featured)} />
             ) : null}
@@ -163,7 +177,7 @@ export default function NewsScreen() {
             ))}
 
             <Pressable style={styles.reloadButton} onPress={() => load(filter)}>
-              <MaterialIcons name="refresh" size={14} color={colors.primary} />
+              <MaterialIcons name="refresh" size={16} color={colors.primary} />
               <Text style={styles.reloadText}>Recarregar</Text>
             </Pressable>
           </>
@@ -177,6 +191,8 @@ export default function NewsScreen() {
 
 // ── Destaque ─────────────────────────────────────────────────
 function FeaturedCard({ item, onPress }: { item: NewsItem; onPress: () => void }) {
+  const styles = useStyles();
+  const { colors, gradients } = useTheme();
   return (
     <Pressable onPress={onPress}>
       <LinearGradient
@@ -200,13 +216,13 @@ function FeaturedCard({ item, onPress }: { item: NewsItem; onPress: () => void }
         <View style={styles.featuredFooter}>
           {item.source ? (
             <>
-              <MaterialIcons name="public" size={12} color={colors.textOnBlueDim} />
+              <MaterialIcons name="public" size={16} color={colors.textOnBlueDim} />
               <Text style={styles.featuredSource}>{item.source}</Text>
             </>
           ) : null}
           <View style={styles.spacer} />
           <Text style={styles.featuredReadMore}>Ler mais</Text>
-          <MaterialIcons name="arrow-forward" size={14} color={colors.textOnBlue} />
+          <MaterialIcons name="arrow-forward" size={16} color={colors.textOnBlue} />
         </View>
       </LinearGradient>
     </Pressable>
@@ -215,15 +231,17 @@ function FeaturedCard({ item, onPress }: { item: NewsItem; onPress: () => void }
 
 // ── Item da lista ────────────────────────────────────────────
 function NewsTile({ item, onPress }: { item: NewsItem; onPress: () => void }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   return (
-    <Pressable style={styles.tile} onPress={onPress}>
+    <Pressable style={({ pressed }) => [styles.tile, pressed && styles.tilePressed]} onPress={onPress}>
       <View style={styles.tileIcon}>
-        <MaterialIcons name="article" size={22} color={colors.primary} />
+        <MaterialIcons name="article" size={20} color={colors.textSecondary} />
       </View>
 
       <View style={styles.tileBody}>
         <View style={styles.tileMeta}>
-          {item.ticker ? <NewsTag label={item.ticker} color={colors.accent} /> : null}
+          {item.ticker ? <NewsTag label={item.ticker} color={colors.primary} /> : null}
           <Text style={styles.tileTime}>{item.timeAgo}</Text>
           <View style={styles.spacer} />
           {item.source ? <Text style={styles.tileTime}>{item.source}</Text> : null}
@@ -241,6 +259,8 @@ function NewsTile({ item, onPress }: { item: NewsItem; onPress: () => void }) {
 
 // ── Detalhe ──────────────────────────────────────────────────
 function NewsDetailSheet({ item, onClose }: { item: NewsItem | null; onClose: () => void }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   if (!item) return null;
 
   return (
@@ -253,7 +273,7 @@ function NewsDetailSheet({ item, onClose }: { item: NewsItem | null; onClose: ()
         <ScrollView contentContainerStyle={styles.sheetContent}>
           <View style={styles.tagRow}>
             {item.ticker ? <NewsTag label={item.ticker} color={colors.primary} /> : null}
-            <NewsTag label={categoryLabel(item.category)} color={colors.accent} />
+            <NewsTag label={categoryLabel(item.category)} color={colors.textSecondary} />
             <View style={styles.spacer} />
             <Text style={styles.sheetTime}>{item.timeAgo}</Text>
           </View>
@@ -263,33 +283,32 @@ function NewsDetailSheet({ item, onClose }: { item: NewsItem | null; onClose: ()
 
           {item.source ? (
             <View style={styles.sheetSourceRow}>
-              <MaterialIcons name="public" size={13} color={colors.textMuted} />
+              <MaterialIcons name="public" size={16} color={colors.textMuted} />
               <Text style={styles.sheetSource}>{item.source}</Text>
             </View>
           ) : null}
 
           <View style={styles.sheetDivider} />
 
-          <Text style={styles.sheetBody}>
-            A análise indica que o resultado está em linha com os fundamentos sólidos da empresa.
-            Especialistas recomendam cautela ao avaliar o momento para novos aportes, considerando
-            o cenário macroeconômico atual e as perspectivas para o setor.
-            {'\n\n'}
-            Os dados divulgados reforçam a tese de investimento de longo prazo, mas investidores
-            devem acompanhar de perto os próximos balanços para confirmar a tendência.
-          </Text>
+          {item.content ? <Text style={styles.sheetBody}>{item.content}</Text> : null}
 
           {item.url ? (
-            <Pressable style={styles.outlinedButton} onPress={onClose}>
-              <MaterialIcons name="open-in-new" size={16} color={colors.primary} />
-              <Text style={styles.outlinedButtonText}>Abrir fonte original</Text>
-            </Pressable>
+            <>
+              <Text style={styles.sheetHint}>
+                O texto completo está no site do veículo
+              </Text>
+              <Pressable
+                style={styles.outlinedButton}
+                onPress={() => WebBrowser.openBrowserAsync(item.url!)}
+                accessibilityRole="link"
+              >
+                <MaterialIcons name="open-in-new" size={16} color={colors.primary} />
+                <Text style={styles.outlinedButtonText}>Abrir fonte original</Text>
+              </Pressable>
+            </>
+          ) : item.isSample ? (
+            <Text style={styles.sheetHint}>Notícia de exemplo, sem fonte original</Text>
           ) : null}
-
-          <Pressable style={styles.outlinedButton} onPress={onClose}>
-            <MaterialIcons name="bookmark-border" size={16} color={colors.primary} />
-            <Text style={styles.outlinedButtonText}>Salvar artigo</Text>
-          </Pressable>
         </ScrollView>
       </View>
     </Modal>
@@ -298,6 +317,8 @@ function NewsDetailSheet({ item, onClose }: { item: NewsItem | null; onClose: ()
 
 // ── Estados ──────────────────────────────────────────────────
 function LoadingState() {
+  const styles = useStyles();
+  const { colors } = useTheme();
   return (
     <>
       <View style={styles.loadingFeatured}>
@@ -311,6 +332,8 @@ function LoadingState() {
 }
 
 function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   return (
     <View style={styles.stateBlock}>
       <MaterialIcons name="wifi-off" size={48} color={colors.textMuted} />
@@ -325,12 +348,14 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
 }
 
 function EmptyState({ onRetry }: { onRetry: () => void }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   return (
     <View style={styles.stateBlock}>
       <MaterialIcons name="newspaper" size={48} color={colors.textMuted} />
       <Text style={styles.stateEmptyTitle}>Nenhuma notícia nessa categoria</Text>
       <Pressable style={styles.reloadButton} onPress={onRetry}>
-        <MaterialIcons name="refresh" size={14} color={colors.primary} />
+        <MaterialIcons name="refresh" size={16} color={colors.primary} />
         <Text style={styles.reloadText}>Recarregar</Text>
       </Pressable>
     </View>
@@ -338,6 +363,7 @@ function EmptyState({ onRetry }: { onRetry: () => void }) {
 }
 
 function NewsTag({ label, color }: { label: string; color: string }) {
+  const styles = useStyles();
   return (
     <View
       style={[styles.tag, { backgroundColor: alpha(color, 0.12), borderColor: alpha(color, 0.3) }]}
@@ -347,12 +373,12 @@ function NewsTag({ label, color }: { label: string; color: string }) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   screen: { flex: 1, backgroundColor: colors.bg0 },
   spacer: { flex: 1 },
 
   header: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingBottom: 20,
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,
@@ -362,7 +388,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingVertical: 16,
     backgroundColor: 'rgba(255, 255, 255, 0.13)',
     borderRadius: 20,
     borderWidth: 1,
@@ -376,14 +402,14 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.18)',
     borderRadius: 18,
   },
-  headerTitle: { flex: 1, color: colors.textOnBlue, fontSize: 18, fontWeight: '700' },
+  headerTitle: { flex: 1, color: colors.textOnBlue, fontSize: 18, fontWeight: '600' },
 
   // Altura fixa como o SizedBox(height: 44) do Flutter: sem ela o ScrollView
   // horizontal encolhe e corta o texto dos chips.
   filters: { height: 44, flexGrow: 0, marginVertical: 12 },
   filtersContent: { paddingHorizontal: 20, gap: 8, alignItems: 'center' },
   chip: {
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     paddingVertical: 8,
     backgroundColor: colors.bg2,
     borderRadius: radius.pill,
@@ -395,7 +421,7 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
     borderWidth: 1.5,
   },
-  chipText: { color: colors.textSecondary, fontSize: 12, fontWeight: '600' },
+  chipText: { color: colors.textSecondary, fontSize: 12, fontWeight: '500' },
   chipTextSelected: { color: colors.primary },
 
   content: { paddingHorizontal: 20, paddingBottom: 32 },
@@ -407,57 +433,58 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: alpha(colors.primary, 0.3),
   },
-  tagRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  tagRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   featuredTime: { color: colors.textOnBlueDim, fontSize: 11 },
   featuredHeadline: {
-    marginTop: 10,
+    marginTop: 8,
     color: colors.textOnBlue,
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '600',
     lineHeight: 16 * 1.4,
   },
-  featuredSub: { marginTop: 6, color: colors.textOnBlueDim, fontSize: 13 },
+  featuredSub: { marginTop: 8, color: colors.textOnBlueDim, fontSize: 13 },
   featuredFooter: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 12 },
   featuredSource: { color: colors.textOnBlueDim, fontSize: 11 },
-  featuredReadMore: { color: colors.textOnBlue, fontSize: 12, fontWeight: '700' },
+  featuredReadMore: { color: colors.textOnBlue, fontSize: 12, fontWeight: '500' },
 
   tile: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 12,
-    marginBottom: 10,
+    marginBottom: 8,
     padding: spacing.base,
     backgroundColor: colors.bg2,
     borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.border,
   },
+  tilePressed: { backgroundColor: colors.surfacePressed },
   tileIcon: {
     width: 48,
     height: 48,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: alpha(colors.primary, 0.1),
+    backgroundColor: colors.bg3,
     borderRadius: radius.md,
   },
   tileBody: { flex: 1 },
-  tileMeta: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  tileMeta: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   tileTime: { color: colors.textMuted, fontSize: 10 },
   tileHeadline: {
     marginTop: 4,
     color: colors.textPrimary,
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '500',
     lineHeight: 13 * 1.4,
   },
 
   tag: {
     paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingVertical: 4,
     borderRadius: radius.sm,
     borderWidth: 1,
   },
-  tagText: { fontSize: 10, fontWeight: '700' },
+  tagText: { fontSize: 10, fontWeight: '500' },
 
   loadingFeatured: {
     height: 160,
@@ -471,7 +498,7 @@ const styles = StyleSheet.create({
   },
   loadingTile: {
     height: 76,
-    marginBottom: 10,
+    marginBottom: 8,
     backgroundColor: colors.bg2,
     borderRadius: radius.lg,
     borderWidth: 1,
@@ -504,12 +531,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     borderRadius: radius.lg,
   },
-  retryText: { color: '#FFFFFF', fontSize: 14, fontWeight: '600' },
+  retryText: { color: '#FFFFFF', fontSize: 14, fontWeight: '500' },
   reloadButton: {
     flexDirection: 'row',
     alignSelf: 'center',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
     marginTop: 16,
     paddingHorizontal: 24,
     paddingVertical: 12,
@@ -517,7 +544,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  reloadText: { color: colors.primary, fontSize: 14, fontWeight: '600' },
+  reloadText: { color: colors.primary, fontSize: 14, fontWeight: '500' },
 
   sheetBackdrop: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.35)' },
   sheet: {
@@ -540,7 +567,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     color: colors.textPrimary,
     fontSize: 20,
-    fontWeight: '700',
+    fontWeight: '600',
     lineHeight: 20 * 1.4,
   },
   sheetSub: {
@@ -549,10 +576,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 14 * 1.6,
   },
-  sheetSourceRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 10 },
+  sheetSourceRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8 },
   sheetSource: { color: colors.textMuted, fontSize: 12 },
   sheetDivider: { height: 1, marginVertical: 20, backgroundColor: colors.border },
   sheetBody: { color: colors.textSecondary, fontSize: 14, lineHeight: 14 * 1.7 },
+  sheetHint: { marginTop: 16, color: colors.textMuted, fontSize: 12, textAlign: 'center' },
+  sampleBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+    padding: spacing.md,
+    backgroundColor: alpha(colors.warning, 0.1),
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: alpha(colors.warning, 0.3),
+  },
+  sampleText: { flex: 1, color: colors.textSecondary, fontSize: 12 },
   outlinedButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -565,4 +605,4 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   outlinedButtonText: { color: colors.primary, fontSize: 15, fontWeight: '600' },
-});
+}));

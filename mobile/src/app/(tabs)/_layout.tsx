@@ -1,10 +1,12 @@
 import { Tabs } from 'expo-router';
 
 import { BottomNav, navItems } from '@/components/BottomNav';
-import { colors } from '@/theme';
+import { useTheme } from '@/contexts/ThemeContext';
+
 
 /** Porte de _AppShell em main.dart. */
 export default function TabsLayout() {
+  const { colors } = useTheme();
   return (
     <Tabs
       tabBar={(props) => <BottomNav {...props} />}

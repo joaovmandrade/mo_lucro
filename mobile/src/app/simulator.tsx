@@ -14,8 +14,11 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { alpha, colors, gradients, radius, shadows, spacing } from '@/theme';
-import { currency } from '@/utils/formatters';
+import { alpha, makeStyles, radius, shadows, spacing } from '@/theme';
+import { compoundFutureValue } from '@/utils/finance';
+import { currency, percentText } from '@/utils/formatters';
+import { useTheme } from '@/contexts/ThemeContext';
+import { goBack } from '@/lib/navigation';
 
 /** Porte de lib/pages/income_simulator_page.dart. */
 
@@ -31,6 +34,8 @@ const BANKS: BankRate[] = [
 ];
 
 export default function SimulatorScreen() {
+  const styles = useStyles();
+  const { colors, gradients } = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -45,13 +50,12 @@ export default function SimulatorScreen() {
   const invested = initial + monthly * period;
 
   /**
-   * Mesma conta do _calcFinal do Flutter: juros simples sobre o total aportado,
-   * proporcional ao período em anos. (O método Dart também calculava um valor
-   * futuro composto, mas descartava o resultado — só esta linha valia.)
+   * Juros compostos (RF-006): o saldo inicial rende mês a mês pela taxa mensal
+   * equivalente à anual, e cada aporte mensal passa a render a partir do mês
+   * seguinte. Ver compoundFutureValue em utils/finance.ts.
    */
   function finalValue(rate: number): number {
-    if (period <= 0) return invested;
-    return invested + invested * rate * (period / 12);
+    return compoundFutureValue({ initial, monthly, months: period, annualRate: rate });
   }
 
   function returnValue(rate: number): number {
@@ -64,12 +68,12 @@ export default function SimulatorScreen() {
         colors={gradients.header.colors}
         start={gradients.header.start}
         end={gradients.header.end}
-        style={[styles.header, { paddingTop: insets.top + 12 }]}
+        style={[styles.header, { paddingTop: insets.top + 16 }]}
       >
         <View style={styles.headerCard}>
           <Pressable
             style={styles.backButton}
-            onPress={() => router.back()}
+            onPress={() => goBack(router)}
             accessibilityLabel="Voltar"
           >
             <MaterialIcons name="arrow-back-ios-new" size={16} color={colors.textOnBlue} />
@@ -118,7 +122,7 @@ export default function SimulatorScreen() {
             <View key={bank.name} style={styles.bankRow}>
               <View style={styles.bankInfo}>
                 <Text style={styles.bankName}>{bank.name}</Text>
-                <Text style={styles.bankRate}>{(bank.annualRate * 100).toFixed(2)}% a.a.</Text>
+                <Text style={styles.bankRate}>{percentText(bank.annualRate * 100)} a.a.</Text>
               </View>
 
               <View style={styles.bankValues}>
@@ -129,8 +133,9 @@ export default function SimulatorScreen() {
           ))}
 
           <Text style={styles.disclaimer}>
-            * Simulação simplificada baseada em taxa anual fixa. Rendimentos reais variam conforme
-            a taxa Selic e condições de cada banco.
+            * Simulação por juros compostos com taxa anual fixa convertida em taxa mensal
+            equivalente e aportes no fim de cada mês. Não considera Imposto de Renda nem IOF.
+            Rendimentos reais variam conforme a taxa Selic e as condições de cada banco.
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -151,6 +156,7 @@ function InputRow({
   prefix?: string;
   suffix?: string;
 }) {
+  const styles = useStyles();
   return (
     <View style={styles.inputRow}>
       <Text style={styles.inputLabel}>{label}</Text>
@@ -170,6 +176,7 @@ function InputRow({
 }
 
 function StatBox({ label, value, color }: { label: string; value: string; color: string }) {
+  const styles = useStyles();
   return (
     <View style={styles.statBox}>
       <Text style={styles.statLabel}>{label}</Text>
@@ -178,12 +185,12 @@ function StatBox({ label, value, color }: { label: string; value: string; color:
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   screen: { flex: 1, backgroundColor: colors.bg0 },
   flex: { flex: 1 },
 
   header: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingBottom: 20,
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,
@@ -193,7 +200,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingVertical: 16,
     backgroundColor: 'rgba(255, 255, 255, 0.13)',
     borderRadius: 20,
     borderWidth: 1,
@@ -207,7 +214,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.18)',
     borderRadius: 18,
   },
-  headerTitle: { flex: 1, color: colors.textOnBlue, fontSize: 18, fontWeight: '700' },
+  headerTitle: { flex: 1, color: colors.textOnBlue, fontSize: 18, fontWeight: '600' },
 
   content: { padding: spacing.lg, paddingBottom: 40 },
 
@@ -219,7 +226,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     boxShadow: shadows.card,
   },
-  cardTitle: { color: colors.textPrimary, fontSize: 16, fontWeight: '700', marginBottom: 16 },
+  cardTitle: { color: colors.textPrimary, fontSize: 16, fontWeight: '600', marginBottom: 16 },
 
   inputRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   inputLabel: { flex: 2, color: colors.textSecondary, fontSize: 13 },
@@ -237,10 +244,10 @@ const styles = StyleSheet.create({
   inputSuffix: { color: colors.textMuted, fontSize: 12 },
   input: {
     flex: 1,
-    paddingVertical: 10,
+    paddingVertical: 12,
     color: colors.textPrimary,
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '500',
   },
 
   summary: {
@@ -250,28 +257,28 @@ const styles = StyleSheet.create({
     marginTop: 20,
     paddingHorizontal: spacing.base,
     paddingVertical: spacing.md,
-    backgroundColor: alpha(colors.accent, 0.08),
+    backgroundColor: colors.bg2,
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: alpha(colors.accent, 0.2),
+    borderColor: colors.border,
   },
   summaryDivider: { width: 1, height: 32, backgroundColor: colors.border },
   statBox: { alignItems: 'center' },
   statLabel: { color: colors.textMuted, fontSize: 11, fontWeight: '500' },
-  statValue: { marginTop: 4, fontSize: 14, fontWeight: '700' },
+  statValue: { marginTop: 4, fontSize: 14, fontWeight: '500' },
 
   sectionTitle: {
     marginTop: 20,
     marginBottom: 12,
     color: colors.textPrimary,
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '600',
   },
 
   bankRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 8,
     padding: spacing.base,
     backgroundColor: colors.bg2,
     borderRadius: radius.lg,
@@ -279,11 +286,11 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   bankInfo: { flex: 2 },
-  bankName: { color: colors.textPrimary, fontSize: 14, fontWeight: '700' },
+  bankName: { color: colors.textPrimary, fontSize: 14, fontWeight: '500' },
   bankRate: { color: colors.textMuted, fontSize: 11 },
   bankValues: { flex: 3, alignItems: 'flex-end' },
-  bankFinal: { color: colors.textPrimary, fontSize: 14, fontWeight: '700' },
-  bankReturn: { color: colors.profit, fontSize: 12, fontWeight: '600' },
+  bankFinal: { color: colors.textPrimary, fontSize: 14, fontWeight: '500' },
+  bankReturn: { color: colors.profit, fontSize: 12, fontWeight: '500' },
 
   disclaimer: {
     marginTop: 24,
@@ -291,4 +298,4 @@ const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 11 * 1.5,
   },
-});
+}));

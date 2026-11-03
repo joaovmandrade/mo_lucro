@@ -1,12 +1,13 @@
-import { Ionicons } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import type { ComponentProps } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors, radius, shadows } from '@/theme';
+import { makeStyles, radius, shadows } from '@/theme';
+import { useTheme } from '@/contexts/ThemeContext';
 
-type IconName = keyof typeof Ionicons.glyphMap;
+type IconName = keyof typeof MaterialIcons.glyphMap;
 
 /** O expo-router não reexporta esse tipo, então derivamos dele mesmo. */
 type BottomTabBarProps = Parameters<NonNullable<ComponentProps<typeof Tabs>['tabBar']>>[0];
@@ -14,21 +15,22 @@ type BottomTabBarProps = Parameters<NonNullable<ComponentProps<typeof Tabs>['tab
 type NavDef = {
   name: string;
   icon: IconName;
-  activeIcon: IconName;
   label: string;
 };
 
 /** Mesma ordem e mesmos rótulos de _navItems em main.dart. */
 export const navItems: NavDef[] = [
-  { name: 'index', icon: 'home-outline', activeIcon: 'home', label: 'Dashboard' },
-  { name: 'portfolio', icon: 'pie-chart-outline', activeIcon: 'pie-chart', label: 'Portfólio' },
-  { name: 'transactions', icon: 'receipt-outline', activeIcon: 'receipt', label: 'Transações' },
-  { name: 'goals', icon: 'flag-outline', activeIcon: 'flag', label: 'Metas' },
-  { name: 'knowledge', icon: 'book-outline', activeIcon: 'book', label: 'Conhecimento' },
+  { name: 'index', icon: 'home', label: 'Dashboard' },
+  { name: 'portfolio', icon: 'pie-chart', label: 'Portfólio' },
+  { name: 'transactions', icon: 'receipt', label: 'Transações' },
+  { name: 'goals', icon: 'flag', label: 'Metas' },
+  { name: 'knowledge', icon: 'menu-book', label: 'Conhecimento' },
 ];
 
 /** Porte de _BottomNav em main.dart — barra flutuante com pílula no item ativo. */
 export function BottomNav({ state, navigation }: BottomTabBarProps) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
 
   return (
@@ -61,7 +63,7 @@ export function BottomNav({ state, navigation }: BottomTabBarProps) {
               accessibilityLabel={item.name === 'knowledge' ? 'Base de Conhecimento' : item.label}
               style={[styles.item, active && styles.itemActive]}
             >
-              <Ionicons name={active ? item.activeIcon : item.icon} size={22} color={color} />
+              <MaterialIcons name={item.icon} size={24} color={color} />
               <Text
   numberOfLines={1}
   adjustsFontSizeToFit
@@ -78,17 +80,17 @@ export function BottomNav({ state, navigation }: BottomTabBarProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   safeArea: {
     backgroundColor: colors.bg0,
   },
   bar: {
     flexDirection: 'row',
-    height: 66,
+    height: 64,
     marginHorizontal: 16,
     marginTop: 8,
     marginBottom: 12,
-    padding: 6,
+    padding: 8,
     backgroundColor: colors.bg1,
     borderRadius: radius.xl,
     borderWidth: 1,
@@ -109,11 +111,11 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(37, 99, 235, 0.20)',
   },
   label: {
-    marginTop: 3,
+    marginTop: 4,
     fontSize: 10,
     fontWeight: '500',
   },
   labelActive: {
-    fontWeight: '700',
+    fontWeight: '600',
   },
-});
+}));
