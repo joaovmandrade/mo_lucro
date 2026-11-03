@@ -18,13 +18,14 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withTiming,
-  Easing,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Snackbar, useSnackbar } from '@/components/Snackbar';
 import { useAuth } from '@/contexts/AuthContext';
-import { alpha, colors, gradients, radius } from '@/theme';
+import { alpha, makeStyles, radius } from '@/theme';
+import { motion } from '@/theme/motion';
+import { useTheme } from '@/contexts/ThemeContext';
 
 /** Porte de lib/pages/login_page.dart. */
 
@@ -33,7 +34,7 @@ const LOGIN_BG = '#1B2A4A';
 const LOGIN_CARD = '#243158';
 const LOGIN_INPUT = '#1E2D50';
 const LOGIN_BORDER = '#344370';
-const LOGIN_BLUE = '#1E88E5';
+const LOGIN_BLUE = '#2563EB';
 const LOGIN_TEXT = '#FFFFFF';
 const LOGIN_DIM = 'rgba(255, 255, 255, 0.5)';
 const LOGIN_MUTED = 'rgba(255, 255, 255, 0.25)';
@@ -41,6 +42,8 @@ const LOGIN_MUTED = 'rgba(255, 255, 255, 0.25)';
 const EMAIL_PATTERN = /^[^@]+@[^@]+\.[^@]+/;
 
 export default function LoginScreen() {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const { signIn, signUp } = useAuth();
   const insets = useSafeAreaInsets();
   const { message, show } = useSnackbar();
@@ -61,12 +64,12 @@ export default function LoginScreen() {
 
   useEffect(() => {
     entrance.value = 0;
-    entrance.value = withTiming(1, { duration: 600, easing: Easing.out(Easing.ease) });
+    entrance.value = withTiming(1, { duration: motion.enter, easing: motion.ease });
   }, [isSignUp, entrance]);
 
   const entranceStyle = useAnimatedStyle(() => ({
     opacity: entrance.value,
-    transform: [{ translateY: (1 - entrance.value) * 16 }],
+    transform: [{ translateY: (1 - entrance.value) * motion.rise }],
   }));
 
   function validate(): boolean {
@@ -95,7 +98,7 @@ export default function LoginScreen() {
     try {
       if (isSignUp) {
         await signUp(email, password);
-        show('Conta criada com sucesso! Bem-vindo 🎉');
+        show('Conta criada');
       } else {
         await signIn(email, password);
       }
@@ -119,9 +122,6 @@ export default function LoginScreen() {
       <StatusBar style="light" />
 
       {/* Círculos decorativos */}
-      <View style={[styles.circle, styles.circleTopLeft]} />
-      <View style={[styles.circle, styles.circleMidLeft]} />
-      <View style={[styles.circle, styles.circleBottomRight]} />
 
       <KeyboardAvoidingView
         style={styles.flex}
@@ -141,7 +141,7 @@ export default function LoginScreen() {
 
             <View style={styles.card}>
               <LoginField
-                label="E-MAIL"
+                label="E-mail"
                 value={email}
                 onChangeText={setEmail}
                 placeholder="seu@email.com"
@@ -151,7 +151,7 @@ export default function LoginScreen() {
               />
 
               <LoginField
-                label="SENHA"
+                label="Senha"
                 value={password}
                 onChangeText={setPassword}
                 placeholder="••••••••"
@@ -164,7 +164,7 @@ export default function LoginScreen() {
 
               {isSignUp ? (
                 <LoginField
-                  label="CONFIRMAR SENHA"
+                  label="Confirmar senha"
                   value={confirm}
                   onChangeText={setConfirm}
                   placeholder="••••••••"
@@ -234,6 +234,8 @@ export default function LoginScreen() {
 }
 
 function Logo() {
+  const styles = useStyles();
+  const { gradients } = useTheme();
   return (
     <View style={styles.logoBlock}>
       <LinearGradient
@@ -276,6 +278,7 @@ function LoginField({
   secureVisible?: boolean;
   error?: string | null;
 }) {
+  const styles = useStyles();
   return (
     <View style={styles.field}>
       <Text style={styles.fieldLabel}>{label}</Text>
@@ -312,13 +315,13 @@ function LoginField({
 /** Porte de _friendlyError — traduz as mensagens do Supabase. */
 function friendlyError(raw: string): string {
   if (raw.includes('Invalid login credentials') || raw.includes('invalid_credentials')) {
-    return 'Email ou senha incorretos.';
+    return 'Email ou senha incorretos';
   }
   if (raw.includes('already registered') || raw.includes('already been registered')) {
-    return 'Este email já está cadastrado.';
+    return 'Este email já está cadastrado';
   }
   if (raw.includes('weak_password') || raw.includes('weak password')) {
-    return 'Senha muito fraca (mínimo 6 caracteres).';
+    return 'Senha muito fraca, use ao menos 6 caracteres';
   }
   if (raw.includes('network') || raw.includes('Failed to fetch')) {
     return 'Sem conexão. Verifique sua internet.';
@@ -326,32 +329,9 @@ function friendlyError(raw: string): string {
   return raw.length > 0 ? raw : 'Erro inesperado. Tente novamente.';
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   screen: { flex: 1, backgroundColor: LOGIN_BG },
   flex: { flex: 1 },
-
-  circle: { position: 'absolute', borderRadius: 9999 },
-  circleTopLeft: {
-    top: -80,
-    left: -60,
-    width: 220,
-    height: 220,
-    backgroundColor: alpha(LOGIN_BLUE, 0.08),
-  },
-  circleMidLeft: {
-    top: 40,
-    left: -30,
-    width: 130,
-    height: 130,
-    backgroundColor: alpha(LOGIN_BLUE, 0.06),
-  },
-  circleBottomRight: {
-    bottom: -60,
-    right: -50,
-    width: 200,
-    height: 200,
-    backgroundColor: alpha(LOGIN_BLUE, 0.06),
-  },
 
   content: { paddingHorizontal: 28, paddingBottom: 40 },
 
@@ -362,14 +342,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 18,
-    boxShadow: `0px 8px 20px ${alpha(LOGIN_BLUE, 0.35)}`,
   },
   logoText: {
-    marginTop: 14,
+    marginTop: 12,
     color: '#FFFFFF',
     fontSize: 28,
-    fontWeight: '900',
-    letterSpacing: -0.5,
+    fontWeight: '600',
   },
   logoTextAccent: { color: LOGIN_BLUE },
   logoTagline: { marginTop: 4, color: LOGIN_DIM, fontSize: 12 },
@@ -378,11 +356,10 @@ const styles = StyleSheet.create({
     marginTop: 36,
     color: LOGIN_TEXT,
     fontSize: 24,
-    fontWeight: '800',
-    letterSpacing: -0.5,
+    fontWeight: '600',
     textAlign: 'center',
   },
-  subtitle: { marginTop: 6, color: LOGIN_DIM, fontSize: 13, textAlign: 'center' },
+  subtitle: { marginTop: 8, color: LOGIN_DIM, fontSize: 13, textAlign: 'center' },
 
   card: {
     marginTop: 36,
@@ -396,16 +373,15 @@ const styles = StyleSheet.create({
   field: { marginBottom: 20 },
   fieldLabel: {
     color: LOGIN_DIM,
-    fontSize: 11,
-    fontWeight: '600',
-    letterSpacing: 0.8,
+    fontSize: 13,
+    fontWeight: '500',
   },
   fieldBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
     marginTop: 8,
-    paddingHorizontal: 18,
+    paddingHorizontal: 20,
     backgroundColor: LOGIN_INPUT,
     borderRadius: radius.lg,
     borderWidth: 1,
@@ -413,12 +389,12 @@ const styles = StyleSheet.create({
   },
   fieldBoxError: { borderColor: colors.loss },
   fieldInput: { flex: 1, paddingVertical: 16, color: LOGIN_TEXT, fontSize: 15 },
-  fieldError: { marginTop: 6, color: colors.loss, fontSize: 12 },
+  fieldError: { marginTop: 8, color: colors.loss, fontSize: 12 },
 
   forgotPassword: {
     alignSelf: 'flex-end',
-    marginTop: -10,
-    marginBottom: 10,
+    marginTop: -8,
+    marginBottom: 8,
     color: LOGIN_BLUE,
     fontSize: 12,
     fontWeight: '500',
@@ -429,7 +405,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     marginBottom: 20,
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     paddingVertical: 12,
     backgroundColor: alpha(colors.loss, 0.1),
     borderRadius: radius.md,
@@ -448,17 +424,17 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
   },
   submitButtonDimmed: { opacity: 0.8 },
-  submitLabel: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
+  submitLabel: { color: '#FFFFFF', fontSize: 15, fontWeight: '600' },
 
   dividerRow: { flexDirection: 'row', alignItems: 'center', marginTop: 20 },
   divider: { flex: 1, height: 1, backgroundColor: LOGIN_BORDER },
-  dividerText: { marginHorizontal: 14, color: LOGIN_MUTED, fontSize: 12 },
+  dividerText: { marginHorizontal: 12, color: LOGIN_MUTED, fontSize: 12 },
 
   googleButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
+    gap: 8,
     height: 52,
     marginTop: 16,
     borderRadius: radius.lg,
@@ -474,10 +450,10 @@ const styles = StyleSheet.create({
     backgroundColor: LOGIN_BORDER,
     borderRadius: 10,
   },
-  googleIconText: { color: LOGIN_DIM, fontSize: 11, fontWeight: '800' },
+  googleIconText: { color: LOGIN_DIM, fontSize: 11, fontWeight: '500' },
   googleLabel: { color: LOGIN_DIM, fontSize: 14 },
 
   toggle: { marginTop: 28, alignItems: 'center' },
   toggleText: { color: LOGIN_MUTED, fontSize: 13, textAlign: 'center' },
-  toggleAction: { color: LOGIN_BLUE, fontWeight: '700' },
-});
+  toggleAction: { color: LOGIN_BLUE, fontWeight: '600' },
+}));

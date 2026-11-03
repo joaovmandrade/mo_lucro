@@ -1,10 +1,13 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import Svg, { G, Path, Text as SvgText } from 'react-native-svg';
 
-import { chartColors, colors, fonts } from '@/theme';
+import { fonts, makeStyles } from '@/theme';
+import { categoryColor } from '@/utils/categories';
+import { useTheme } from '@/contexts/ThemeContext';
+import { percentText } from '@/utils/formatters';
 
 /**
  * Porte de lib/widgets/portfolio_donut_chart.dart.
@@ -33,6 +36,8 @@ const LABELS: Record<string, string> = {
 };
 
 export function PortfolioDonutChart({ distribution }: { distribution: Record<string, number> }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const [touchedIndex, setTouchedIndex] = useState(-1);
 
   const entries = Object.entries(distribution);
@@ -40,7 +45,7 @@ export function PortfolioDonutChart({ distribution }: { distribution: Record<str
   if (entries.length === 0) {
     return (
       <View style={styles.empty}>
-        <MaterialCommunityIcons name="chart-donut" size={40} color={colors.textMuted} />
+        <MaterialIcons name="donut-large" size={40} color={colors.textMuted} />
         <Text style={styles.emptyText}>Nenhum ativo ainda</Text>
       </View>
     );
@@ -66,7 +71,7 @@ export function PortfolioDonutChart({ distribution }: { distribution: Record<str
       category,
       percent,
       index,
-      color: chartColors[index % chartColors.length],
+      color: categoryColor(category, colors),
       startAngle: start + gap / 2,
       endAngle: start + sweep - gap / 2,
       midAngle: start + sweep / 2,
@@ -128,7 +133,7 @@ export function PortfolioDonutChart({ distribution }: { distribution: Record<str
         >
           {touched ? (
             <>
-              <Text style={styles.centerPercent}>{touched[1].toFixed(1)}%</Text>
+              <Text style={styles.centerPercent}>{percentText(touched[1], 1)}</Text>
               <Text style={styles.centerLabel}>{LABELS[touched[0]] ?? touched[0]}</Text>
             </>
           ) : (
@@ -152,11 +157,11 @@ export function PortfolioDonutChart({ distribution }: { distribution: Record<str
             <View
               style={[
                 styles.legendDot,
-                { backgroundColor: chartColors[index % chartColors.length] },
+                { backgroundColor: categoryColor(category, colors) },
               ]}
             />
             <Text style={styles.legendText}>
-              {LABELS[category] ?? category} {percent.toFixed(1)}%
+              {LABELS[category] ?? category} {percentText(percent, 1)}
             </Text>
           </Pressable>
         ))}
@@ -212,7 +217,7 @@ function donutSlicePath(
   ].join(' ');
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   empty: {
     height: 160,
     alignItems: 'center',
@@ -225,9 +230,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   center: { position: 'absolute', alignItems: 'center' },
-  centerPercent: { color: colors.textPrimary, fontSize: 20, fontWeight: '800' },
+  centerPercent: { color: colors.textPrimary, fontSize: 20, fontWeight: '600' },
   centerLabel: { color: colors.textSecondary, fontSize: 11, fontWeight: '500' },
-  centerTotal: { marginTop: 2, color: colors.textPrimary, fontSize: 16, fontWeight: '700' },
+  centerTotal: { marginTop: 2, color: colors.textPrimary, fontSize: 16, fontWeight: '600' },
   legend: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -238,9 +243,9 @@ const styles = StyleSheet.create({
   legendItem: { flexDirection: 'row', alignItems: 'center' },
   legendDot: { width: 8, height: 8, borderRadius: 4 },
   legendText: {
-    marginLeft: 5,
+    marginLeft: 4,
     color: colors.textSecondary,
     fontSize: 12,
     fontWeight: '500',
   },
-});
+}));

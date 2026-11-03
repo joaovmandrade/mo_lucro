@@ -6,10 +6,14 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 're
 import { FieldLabel, Input, PrimaryButton, ScreenHeader } from '@/components/form';
 import { Snackbar, useSnackbar } from '@/components/Snackbar';
 import { goalService } from '@/services';
-import { alpha, colors, radius } from '@/theme';
+import { alpha, makeStyles, radius } from '@/theme';
+import { useTheme } from '@/contexts/ThemeContext';
+import { goBack } from '@/lib/navigation';
 
 /** Porte de lib/pages/add_goal_page.dart. */
 export default function AddGoalScreen() {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const router = useRouter();
   const { message, show } = useSnackbar();
 
@@ -59,8 +63,8 @@ export default function AddGoalScreen() {
         targetValue,
         currentValue: Number.isFinite(currentValue) ? currentValue : 0,
       });
-      show('Meta criada!');
-      router.back();
+      show('Meta criada');
+      goBack(router, '/goals');
     } catch (err) {
       show(`Erro: ${err instanceof Error ? err.message : String(err)}`, { isError: true });
     } finally {
@@ -88,7 +92,7 @@ export default function AddGoalScreen() {
             <Input
               value={title}
               onChangeText={setTitle}
-              placeholder="Ex: Reserva de emergência, Viagem..."
+              placeholder="Ex.: Reserva de emergência"
               icon="flag"
               error={errors.title}
             />
@@ -131,7 +135,7 @@ export default function AddGoalScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   screen: { flex: 1, backgroundColor: colors.bg0 },
   flex: { flex: 1 },
   content: { padding: 20, paddingBottom: 40 },
@@ -144,7 +148,7 @@ const styles = StyleSheet.create({
     borderColor: alpha(colors.warning, 0.3),
   },
   field: { marginTop: 8, marginBottom: 16 },
-  targetPrefix: { color: colors.warning, fontWeight: '700', fontSize: 18 },
-  targetInput: { color: colors.warning, fontSize: 18, fontWeight: '700' },
+  targetPrefix: { color: colors.warning, fontWeight: '600', fontSize: 18 },
+  targetInput: { color: colors.warning, fontSize: 18, fontWeight: '600' },
   submit: { marginTop: 16 },
-});
+}));

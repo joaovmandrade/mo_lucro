@@ -1,5 +1,5 @@
 import type { AssetCategory } from '@/models';
-import { colors } from '@/theme';
+import { colors as lightPalette, type Palette } from '@/theme';
 
 /**
  * Rótulos e cores de categoria. No Flutter isso estava duplicado em
@@ -34,7 +34,7 @@ export function categoryTagLabel(category: string): string {
 }
 
 /** Cor do avatar — o default é textSecondary, como em _Avatar._color. */
-export function categoryColor(category: string): string {
+export function categoryColor(category: string, colors: Palette = lightPalette): string {
   switch (category) {
     case 'stocks':
       return colors.primary;
@@ -43,16 +43,16 @@ export function categoryColor(category: string): string {
     case 'fixed_income':
       return colors.profit;
     case 'fiis':
-      return colors.accent;
+      return colors.accentTeal;
     default:
       return colors.textSecondary;
   }
 }
 
 /** Cor da tag — igual à do avatar, exceto o default, que é textMuted. */
-export function categoryTagColor(category: string): string {
+export function categoryTagColor(category: string, colors: Palette = lightPalette): string {
   return category in categoryLabels && category !== 'others'
-    ? categoryColor(category)
+    ? categoryColor(category, colors)
     : colors.textMuted;
 }
 

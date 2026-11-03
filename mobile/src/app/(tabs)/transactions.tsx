@@ -16,14 +16,17 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TransactionTile } from '@/components/TransactionTile';
 import { isIncome, type Transaction } from '@/models';
 import { transactionService } from '@/services';
-import { alpha, colors, gradients, radius } from '@/theme';
+import { alpha, makeStyles, radius } from '@/theme';
 import { currency, dateFull, month as monthLabel } from '@/utils/formatters';
+import { useTheme } from '@/contexts/ThemeContext';
 
 /** Porte de lib/pages/transactions_page.dart. */
 
 type Filter = 'all' | 'income' | 'expense';
 
 export default function TransactionsScreen() {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const router = useRouter();
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -168,7 +171,7 @@ export default function TransactionsScreen() {
         onPress={() => router.push('/transactions/new')}
         accessibilityLabel="Nova transação"
       >
-        <MaterialIcons name="add" size={26} color="#FFFFFF" />
+        <MaterialIcons name="add" size={24} color="#FFFFFF" />
       </Pressable>
     </View>
   );
@@ -196,6 +199,8 @@ function TransactionsHeader({
   onPrevMonth: () => void;
   onNextMonth: () => void;
 }) {
+  const styles = useStyles();
+  const { colors, gradients } = useTheme();
   const insets = useSafeAreaInsets();
 
   return (
@@ -203,7 +208,7 @@ function TransactionsHeader({
       colors={gradients.header.colors}
       start={gradients.header.start}
       end={gradients.header.end}
-      style={[styles.header, { paddingTop: insets.top + 14 }]}
+      style={[styles.header, { paddingTop: insets.top + 16 }]}
     >
       <View style={styles.headerTop}>
         <Text style={styles.headerTitle}>Transações</Text>
@@ -248,7 +253,7 @@ function TransactionsHeader({
               <View style={styles.netLabelRow}>
                 <MaterialIcons
                   name={isPositiveNet ? 'trending-up' : 'trending-down'}
-                  size={15}
+                  size={16}
                   color={colors.textOnBlueDim}
                 />
                 <Text style={styles.netLabel}>Saldo do mês</Text>
@@ -278,10 +283,11 @@ function SummaryColumn({
   value: string;
   valueColor: string;
 }) {
+  const styles = useStyles();
   return (
     <View style={styles.summaryColumn}>
       <View style={styles.summaryLabelRow}>
-        <MaterialIcons name={icon} size={13} color={iconColor} />
+        <MaterialIcons name={icon} size={16} color={iconColor} />
         <Text style={styles.summaryLabel}>{label}</Text>
       </View>
       <Text style={[styles.summaryValue, { color: valueColor }]} numberOfLines={1} adjustsFontSizeToFit>
@@ -292,16 +298,17 @@ function SummaryColumn({
 }
 
 function HeaderSkeleton() {
+  const styles = useStyles();
   return (
     <View>
       <View style={styles.skeletonRow}>
-        <View style={[styles.skeletonBox, { width: 90, height: 32 }]} />
-        <View style={[styles.skeletonBox, { width: 90, height: 32, marginLeft: 16 }]} />
+        <View style={[styles.skeletonBox, { width: 88, height: 32 }]} />
+        <View style={[styles.skeletonBox, { width: 88, height: 32, marginLeft: 16 }]} />
       </View>
-      <View style={[styles.skeletonBox, { width: '100%', height: 1, marginTop: 14 }]} />
-      <View style={[styles.skeletonRow, { marginTop: 14, justifyContent: 'space-between' }]}>
-        <View style={[styles.skeletonBox, { width: 90, height: 13 }]} />
-        <View style={[styles.skeletonBox, { width: 80, height: 15 }]} />
+      <View style={[styles.skeletonBox, { width: '100%', height: 1, marginTop: 12 }]} />
+      <View style={[styles.skeletonRow, { marginTop: 12, justifyContent: 'space-between' }]}>
+        <View style={[styles.skeletonBox, { width: 88, height: 12 }]} />
+        <View style={[styles.skeletonBox, { width: 80, height: 16 }]} />
       </View>
     </View>
   );
@@ -310,7 +317,7 @@ function HeaderSkeleton() {
 function FilterChip({
   label,
   active,
-  color = colors.primary,
+  color: colorProp,
   onPress,
 }: {
   label: string;
@@ -318,6 +325,9 @@ function FilterChip({
   color?: string;
   onPress: () => void;
 }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
+  const color = colorProp ?? colors.primary;
   return (
     <Pressable
       onPress={onPress}
@@ -331,7 +341,7 @@ function FilterChip({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   screen: { flex: 1, backgroundColor: colors.bg0 },
 
   header: {
@@ -341,11 +351,11 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 28,
   },
   headerTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  headerTitle: { color: colors.textOnBlue, fontSize: 22, fontWeight: '800' },
-  monthNav: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  headerTitle: { color: colors.textOnBlue, fontSize: 22, fontWeight: '600' },
+  monthNav: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   monthButton: {
-    width: 34,
-    height: 34,
+    width: 36,
+    height: 36,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
@@ -356,7 +366,7 @@ const styles = StyleSheet.create({
   monthLabel: {
     color: colors.textOnBlue,
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '500',
     textTransform: 'capitalize',
   },
 
@@ -372,7 +382,7 @@ const styles = StyleSheet.create({
   summaryColumn: { flex: 1 },
   summaryLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   summaryLabel: { color: colors.textOnBlueDim, fontSize: 12 },
-  summaryValue: { marginTop: 4, fontSize: 16, fontWeight: '700' },
+  summaryValue: { marginTop: 4, fontSize: 16, fontWeight: '600' },
   summaryDivider: {
     width: 1,
     height: 36,
@@ -381,13 +391,13 @@ const styles = StyleSheet.create({
   },
   horizontalDivider: {
     height: 1,
-    marginVertical: 14,
+    marginVertical: 12,
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
   },
   netRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  netLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  netLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   netLabel: { color: colors.textOnBlueDim, fontSize: 13 },
-  netValue: { fontSize: 15, fontWeight: '800' },
+  netValue: { fontSize: 15, fontWeight: '600' },
 
   skeletonBox: { backgroundColor: 'rgba(255, 255, 255, 0.10)', borderRadius: 6 },
   skeletonRow: { flexDirection: 'row', alignItems: 'center' },
@@ -395,14 +405,14 @@ const styles = StyleSheet.create({
   body: { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 100 },
   filters: { flexDirection: 'row', gap: 8, marginBottom: 16 },
   chip: {
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     paddingVertical: 8,
     backgroundColor: colors.bg1,
     borderRadius: radius.pill,
     borderWidth: 1,
     borderColor: colors.border,
   },
-  chipText: { color: colors.textSecondary, fontSize: 12, fontWeight: '600' },
+  chipText: { color: colors.textSecondary, fontSize: 12, fontWeight: '500' },
 
   centerBlock: { paddingVertical: 40, alignItems: 'center' },
   emptyText: { marginTop: 12, color: colors.textSecondary, fontSize: 14, textAlign: 'center' },
@@ -411,8 +421,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     color: colors.textMuted,
     fontSize: 11,
-    fontWeight: '600',
-    letterSpacing: 0.3,
+    fontWeight: '500',
   },
 
   fab: {
@@ -427,4 +436,4 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
   },
   fabPressed: { backgroundColor: colors.primaryDim },
-});
+}));

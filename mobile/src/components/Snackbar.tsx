@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius } from '@/theme';
+import { makeStyles, radius } from '@/theme';
 
 /**
  * Equivalente ao ScaffoldMessenger.showSnackBar do Flutter, com o visual do
@@ -24,6 +24,7 @@ export function useSnackbar() {
 }
 
 export function Snackbar({ message }: { message: { text: string; isError: boolean } | null }) {
+  const styles = useStyles();
   if (!message) return null;
 
   return (
@@ -35,7 +36,7 @@ export function Snackbar({ message }: { message: { text: string; isError: boolea
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   wrapper: {
     position: 'absolute',
     left: 0,
@@ -46,10 +47,10 @@ const styles = StyleSheet.create({
   },
   snackbar: {
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingVertical: 16,
     backgroundColor: '#1F2937',
     borderRadius: radius.md,
   },
   snackbarError: { backgroundColor: colors.loss },
   text: { color: '#FFFFFF', fontSize: 14 },
-});
+}));

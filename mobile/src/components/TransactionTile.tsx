@@ -3,9 +3,10 @@ import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeabl
 import { StyleSheet, Text, View } from 'react-native';
 
 import { isIncome as isIncomeTx, type Transaction } from '@/models';
-import { alpha, colors, radius, shadows } from '@/theme';
+import { alpha, makeStyles, radius, shadows } from '@/theme';
 import { currency, dateShort } from '@/utils/formatters';
 import { transactionCategoryIcon, transactionCategoryLabel } from '@/utils/transactionCategories';
+import { useTheme } from '@/contexts/ThemeContext';
 
 /** Porte de lib/widgets/transaction_tile.dart. */
 export function TransactionTile({
@@ -15,6 +16,8 @@ export function TransactionTile({
   transaction: Transaction;
   onDelete?: () => void;
 }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const income = isIncomeTx(transaction);
   const color = income ? colors.profit : colors.loss;
   const label = transactionCategoryLabel(transaction.category);
@@ -74,13 +77,13 @@ export function TransactionTile({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   tile: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 8,
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingVertical: 16,
     backgroundColor: colors.bg2,
     borderRadius: radius.lg,
     borderWidth: 1,
@@ -88,32 +91,32 @@ const styles = StyleSheet.create({
     boxShadow: shadows.card,
   },
   icon: {
-    width: 42,
-    height: 42,
+    width: 40,
+    height: 40,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: radius.md,
     borderWidth: 1,
   },
   info: { flex: 1, marginLeft: 12 },
-  description: { color: colors.textPrimary, fontSize: 14, fontWeight: '600' },
-  metaRow: { flexDirection: 'row', alignItems: 'center', marginTop: 3, gap: 6 },
+  description: { color: colors.textPrimary, fontSize: 14, fontWeight: '500' },
+  metaRow: { flexDirection: 'row', alignItems: 'center', marginTop: 4, gap: 8 },
   chip: {
-    paddingHorizontal: 7,
+    paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: radius.sm,
   },
-  chipText: { fontSize: 10, fontWeight: '600' },
+  chipText: { fontSize: 10, fontWeight: '500' },
   date: { color: colors.textMuted, fontSize: 11 },
-  amount: { fontSize: 14, fontWeight: '700' },
+  amount: { fontSize: 14, fontWeight: '500' },
   deleteBackground: {
     justifyContent: 'center',
     alignItems: 'flex-end',
     paddingRight: 20,
-    marginBottom: 10,
+    marginBottom: 8,
     backgroundColor: alpha(colors.loss, 0.12),
     borderRadius: radius.xl,
     borderWidth: 1,
     borderColor: alpha(colors.loss, 0.25),
   },
-});
+}));

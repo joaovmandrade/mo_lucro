@@ -15,7 +15,9 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors, radius } from '@/theme';
+import { makeStyles, radius } from '@/theme';
+import { useTheme } from '@/contexts/ThemeContext';
+import { goBack } from '@/lib/navigation';
 
 /**
  * Primitivas de formulário equivalentes ao que o ThemeData do Flutter aplicava
@@ -25,13 +27,15 @@ import { colors, radius } from '@/theme';
 
 /** Equivalente ao AppBar com botão de voltar das telas de cadastro. */
 export function ScreenHeader({ title, onBack }: { title: string; onBack?: () => void }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
   return (
     <View style={[styles.header, { paddingTop: insets.top }]}>
       <Pressable
-        onPress={onBack ?? (() => router.back())}
+        onPress={onBack ?? (() => goBack(router))}
         style={styles.backButton}
         accessibilityLabel="Voltar"
       >
@@ -44,6 +48,7 @@ export function ScreenHeader({ title, onBack }: { title: string; onBack?: () => 
 
 /** Porte do _Label repetido nas páginas de cadastro. */
 export function FieldLabel({ children }: { children: ReactNode }) {
+  const styles = useStyles();
   return <Text style={styles.label}>{children}</Text>;
 }
 
@@ -64,6 +69,8 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
   { prefix, prefixStyle, icon, error, inputStyle, style, ...props },
   ref,
 ) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   return (
     <View>
       <View style={[styles.inputContainer, error ? styles.inputContainerError : null, style]}>
@@ -95,6 +102,7 @@ export function PrimaryButton({
   loading?: boolean;
   disabled?: boolean;
 }) {
+  const styles = useStyles();
   const inactive = loading || disabled;
 
   return (
@@ -116,7 +124,7 @@ export function PrimaryButton({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -129,27 +137,26 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     color: colors.textPrimary,
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '600',
   },
 
   label: {
     color: colors.textSecondary,
     fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: 0.5,
+    fontWeight: '500',
   },
 
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 18,
+    paddingHorizontal: 20,
     backgroundColor: colors.bg3,
     borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.border,
   },
   inputContainerError: { borderColor: colors.loss },
-  inputIcon: { marginRight: 10 },
+  inputIcon: { marginRight: 8 },
   prefix: { color: colors.textSecondary, fontSize: 14 },
   input: {
     flex: 1,
@@ -157,7 +164,7 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     fontSize: 14,
   },
-  errorText: { marginTop: 6, color: colors.loss, fontSize: 12 },
+  errorText: { marginTop: 8, color: colors.loss, fontSize: 12 },
 
   primaryButton: {
     height: 52,
@@ -169,4 +176,4 @@ const styles = StyleSheet.create({
   primaryButtonPressed: { backgroundColor: colors.primaryDim },
   primaryButtonDisabled: { opacity: 0.6 },
   primaryButtonLabel: { color: '#FFFFFF', fontSize: 15, fontWeight: '600' },
-});
+}));
