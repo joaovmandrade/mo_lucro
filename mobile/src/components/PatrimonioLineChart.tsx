@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import Svg, { Circle, Defs, LinearGradient, Path, Stop } from 'react-native-svg';
 
-import { colors, radius } from '@/theme';
+import { makeStyles, radius } from '@/theme';
+import type { PatrimonyPoint } from '@/utils/finance';
+import { useTheme } from '@/contexts/ThemeContext';
 
 /**
  * Porte de lib/widgets/patrimonio_line_chart.dart.
@@ -20,11 +22,14 @@ const SMOOTHNESS = 0.35;
 
 export function PatrimonioLineChart({
   isLoading = false,
-  totalInvested = 0,
+  points: series = [],
 }: {
   isLoading?: boolean;
-  totalInvested?: number;
+  /** Série real do patrimônio investido (ver patrimonyHistory em utils/finance.ts). */
+  points?: PatrimonyPoint[];
 }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const [width, setWidth] = useState(0);
 
   function onLayout(event: LayoutChangeEvent) {
@@ -33,9 +38,18 @@ export function PatrimonioLineChart({
 
   if (isLoading) return <View style={styles.skeleton} />;
 
-  const base = totalInvested > 0 ? totalInvested : 10000;
-  const values = [base * 0.92, base * 0.88, base * 0.91, base * 0.95, base * 0.98, base];
-  const labels = last6Labels();
+  if (series.length < 2 || series.every((point) => point.value === 0)) {
+    return (
+      <View style={styles.empty}>
+        <Text style={styles.emptyText}>
+          Registre operações para acompanhar a evolução do patrimônio
+        </Text>
+      </View>
+    );
+  }
+
+  const values = series.map((point) => point.value);
+  const labels = series.map((point) => point.label);
 
   // Espaço para o raio do ponto não ser cortado nas bordas.
   const left = DOT_RADIUS;
@@ -137,22 +151,7 @@ function buildCurvePath(points: Point[]): string {
   return path;
 }
 
-/** Os 6 últimos dias em dd/MM, como _last6Labels. */
-function last6Labels(): string[] {
-  const now = new Date();
-  const labels: string[] = [];
-
-  for (let i = 5; i >= 0; i--) {
-    const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    labels.push(`${day}/${month}`);
-  }
-
-  return labels;
-}
-
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   skeleton: {
     height: CHART_HEIGHT,
     backgroundColor: colors.bg3,
@@ -166,4 +165,12 @@ const styles = StyleSheet.create({
     paddingTop: 4,
   },
   label: { color: colors.textMuted, fontSize: 9 },
-});
+  empty: {
+    minHeight: CHART_HEIGHT,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  emptyText: { color: colors.textMuted, fontSize: 12, textAlign: 'center' },
+}));

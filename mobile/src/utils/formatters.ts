@@ -28,14 +28,19 @@ export function currencyCompact(value: number): string {
   return brl.format(value);
 }
 
-/** Sempre com sinal explícito — equivale ao padrão '+##0.00;-##0.00'. */
+/** Percentual no formato brasileiro (vírgula decimal), como os valores em reais. */
+export function percentText(value: number, digits = 2): string {
+  return `${value.toFixed(digits).replace('.', ',')}%`;
+}
+
+/** Sempre com sinal explícito, como +1,25% ou -0,40%. */
 export function percent(value: number): string {
   const sign = value < 0 ? '-' : '+';
-  return `${sign}${Math.abs(value).toFixed(2)}%`;
+  return `${sign}${percentText(Math.abs(value))}`;
 }
 
 export function percentSimple(value: number): string {
-  return `${value.toFixed(2)}%`;
+  return percentText(value);
 }
 
 /** dd/MM/yy */

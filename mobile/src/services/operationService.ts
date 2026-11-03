@@ -52,6 +52,17 @@ export async function addOperation(params: {
   }
 }
 
+/** Exclui todas as operações do usuário para um ativo (a posição some do portfólio). */
+export async function deleteOperationsForAsset(asset: string): Promise<void> {
+  const userId = await requireUserId();
+  const { error } = await supabase
+    .from('operations')
+    .delete()
+    .eq('user_id', userId)
+    .eq('asset', asset.toUpperCase());
+  if (error) throw error;
+}
+
 export async function deleteOperation(id: string): Promise<void> {
   const { error } = await supabase.from('operations').delete().eq('id', id);
   if (error) throw error;

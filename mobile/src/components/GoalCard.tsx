@@ -3,8 +3,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { goalProgress, goalProgressPercent, isGoalCompleted, type Goal } from '@/models';
-import { alpha, colors, radius, shadows, spacing } from '@/theme';
-import { currency, dateFull } from '@/utils/formatters';
+import { alpha, makeStyles, radius, shadows, spacing } from '@/theme';
+import { currency, dateFull, percentText } from '@/utils/formatters';
+import { useTheme } from '@/contexts/ThemeContext';
 
 /** Porte de lib/widgets/goal_card.dart. */
 export function GoalCard({
@@ -16,6 +17,8 @@ export function GoalCard({
   onAddProgress?: () => void;
   onDelete?: () => void;
 }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const completed = isGoalCompleted(goal);
   const color = completed ? colors.profit : colors.warning;
   const progress = goalProgress(goal);
@@ -50,7 +53,8 @@ export function GoalCard({
 
         {completed ? (
           <View style={styles.completedBadge}>
-            <Text style={styles.completedText}>✓ Concluída</Text>
+            <MaterialIcons name="check" size={16} color={colors.profit} />
+            <Text style={styles.completedText}>Concluída</Text>
           </View>
         ) : null}
 
@@ -61,7 +65,7 @@ export function GoalCard({
 
       <View style={styles.progressTrack}>
         <LinearGradient
-          colors={completed ? [colors.profit, '#00A882'] : [color, alpha(color, 0.7)]}
+          colors={completed ? [colors.profit, colors.profit] : [color, color]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={[styles.progressFill, { width: `${progress * 100}%` }]}
@@ -70,7 +74,7 @@ export function GoalCard({
 
       <View style={styles.values}>
         <Text style={[styles.currentValue, { color }]}>{currency(goal.currentValue)}</Text>
-        <Text style={styles.percent}>{goalProgressPercent(goal).toFixed(1)}%</Text>
+        <Text style={styles.percent}>{percentText(goalProgressPercent(goal), 1)}</Text>
         <Text style={styles.targetValue}>{currency(goal.targetValue)}</Text>
       </View>
     </View>
@@ -89,7 +93,7 @@ function goalIcon(title: string): keyof typeof MaterialIcons.glyphMap {
   return 'flag';
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   card: {
     marginBottom: 12,
     padding: spacing.lg,
@@ -109,17 +113,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   titleBlock: { flex: 1, marginLeft: 12 },
-  title: { color: colors.textPrimary, fontSize: 15, fontWeight: '700' },
+  title: { color: colors.textPrimary, fontSize: 15, fontWeight: '600' },
   deadline: { color: colors.textMuted, fontSize: 11 },
   completedBadge: {
-    paddingHorizontal: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 12,
     paddingVertical: 4,
     backgroundColor: alpha(colors.profit, 0.12),
     borderRadius: radius.pill,
     borderWidth: 1,
     borderColor: alpha(colors.profit, 0.3),
   },
-  completedText: { color: colors.profit, fontSize: 11, fontWeight: '700' },
+  completedText: { color: colors.profit, fontSize: 11, fontWeight: '500' },
   menuButton: { marginLeft: 4, padding: 4 },
 
   progressTrack: {
@@ -134,9 +141,9 @@ const styles = StyleSheet.create({
   values: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 10,
+    marginTop: 8,
   },
-  currentValue: { fontSize: 13, fontWeight: '700' },
-  percent: { color: colors.textSecondary, fontSize: 12, fontWeight: '600' },
-  targetValue: { color: colors.textMuted, fontSize: 13, fontWeight: '600' },
-});
+  currentValue: { fontSize: 13, fontWeight: '500' },
+  percent: { color: colors.textSecondary, fontSize: 12, fontWeight: '500' },
+  targetValue: { color: colors.textMuted, fontSize: 13, fontWeight: '500' },
+}));

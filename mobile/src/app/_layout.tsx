@@ -14,7 +14,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { Splash } from '@/components/Splash';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
-import { colors } from '@/theme';
+import { ThemeProvider, useTheme } from '@/contexts/ThemeContext';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -36,11 +36,12 @@ export default function RootLayout() {
     // Necessário para o swipe-to-delete da lista de transações.
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        {/* O app é light-only, como o AppTheme do Flutter: ícones escuros na status bar. */}
-        <StatusBar style="dark" />
-        <AuthProvider>
-          <RootNavigator />
-        </AuthProvider>
+        <ThemeProvider>
+          <ThemedStatusBar />
+          <AuthProvider>
+            <RootNavigator />
+          </AuthProvider>
+        </ThemeProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
@@ -50,8 +51,15 @@ export default function RootLayout() {
  * Equivalente ao _AuthGate de main.dart: enquanto a sessão persistida não foi
  * lida mostra o splash; depois libera só as rotas permitidas pela sessão.
  */
+/** Ícones escuros no tema claro e claros no escuro. */
+function ThemedStatusBar() {
+  const { isDark } = useTheme();
+  return <StatusBar style={isDark ? 'light' : 'dark'} />;
+}
+
 function RootNavigator() {
   const { session, loading } = useAuth();
+  const { colors } = useTheme();
 
   if (loading) return <Splash />;
 
@@ -71,6 +79,8 @@ function RootNavigator() {
         <Stack.Screen name="simulator" />
         <Stack.Screen name="news" />
         <Stack.Screen name="profile" />
+        <Stack.Screen name="comparison" />
+        <Stack.Screen name="settings" />
       </Stack.Protected>
 
       <Stack.Protected guard={!session}>
