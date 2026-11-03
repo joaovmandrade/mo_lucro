@@ -1,4 +1,4 @@
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
@@ -18,9 +18,10 @@ import { AssetCard } from '@/components/AssetCard';
 import { PortfolioDonutChart } from '@/components/PortfolioDonutChart';
 import type { Operation } from '@/models';
 import { operationService } from '@/services';
-import { colors, gradients, radius, shadows } from '@/theme';
+import { makeStyles, radius, shadows } from '@/theme';
 import { currency } from '@/utils/formatters';
 import { calculatePortfolio, categoryDistribution, totalInvested } from '@/utils/portfolio';
+import { useTheme } from '@/contexts/ThemeContext';
 
 /** Porte de lib/pages/portfolio_page.dart. */
 
@@ -33,6 +34,8 @@ const CATEGORY_FILTERS: { key: string; label: string }[] = [
 ];
 
 export default function PortfolioScreen() {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const router = useRouter();
 
   const [operations, setOperations] = useState<Operation[]>([]);
@@ -62,17 +65,17 @@ export default function PortfolioScreen() {
   }, [load]);
 
   function confirmDelete(asset: string) {
-    // O Flutter apagava a primeira operação encontrada para o ativo.
-    const operation = operations.find((op) => op.asset === asset) ?? operations[0];
-    if (!operation) return;
-
-    Alert.alert('Excluir operação', 'Todas as operações deste ativo serão excluídas.', [
+    Alert.alert(`Excluir ${asset}`, 'Todas as operações deste ativo serão excluídas', [
       { text: 'Cancelar', style: 'cancel' },
       {
         text: 'Excluir',
         style: 'destructive',
         onPress: async () => {
-          await operationService.deleteOperation(operation.id);
+          try {
+            await operationService.deleteOperationsForAsset(asset);
+          } catch (error) {
+            Alert.alert('Não foi possível excluir', error instanceof Error ? error.message : String(error));
+          }
           load();
         },
       },
@@ -109,6 +112,7 @@ export default function PortfolioScreen() {
           operationCount={operations.length}
           isLoading={loading}
           onRefresh={load}
+          onCompare={() => router.push('/comparison')}
         />
 
         <View style={styles.body}>
@@ -150,7 +154,7 @@ export default function PortfolioScreen() {
             </View>
           ) : filtered.length === 0 ? (
             <View style={styles.emptyList}>
-              <Ionicons name="file-tray-outline" size={40} color={colors.textMuted} />
+              <MaterialIcons name="inbox" size={40} color={colors.textMuted} />
               <Text style={styles.emptyText}>Nenhum ativo nesta categoria</Text>
             </View>
           ) : (
@@ -170,7 +174,7 @@ export default function PortfolioScreen() {
         onPress={() => router.push('/operations/new')}
         accessibilityLabel="Nova operação"
       >
-        <MaterialIcons name="add" size={26} color="#FFFFFF" />
+        <MaterialIcons name="add" size={24} color="#FFFFFF" />
       </Pressable>
     </View>
   );
@@ -185,13 +189,17 @@ function PortfolioHeader({
   operationCount,
   isLoading,
   onRefresh,
+  onCompare,
 }: {
   invested: number;
   positionCount: number;
   operationCount: number;
   isLoading: boolean;
   onRefresh: () => void;
+  onCompare: () => void;
 }) {
+  const styles = useStyles();
+  const { gradients } = useTheme();
   const insets = useSafeAreaInsets();
 
   return (
@@ -202,9 +210,19 @@ function PortfolioHeader({
       style={[styles.header, { paddingTop: insets.top + 16 }]}
     >
       <View style={styles.headerTop}>
-        <Text style={styles.headerTitle}>Portfólio</Text>
+        <Text style={styles.headerTitle} numberOfLines={1} adjustsFontSizeToFit>
+          Portfólio
+        </Text>
+        <Pressable
+          style={styles.compareButton}
+          onPress={onCompare}
+          accessibilityLabel="Comparar com CDI e IPCA"
+        >
+          <MaterialIcons name="insights" size={16} color="#FFFFFF" />
+          <Text style={styles.compareText}>vs. CDI/IPCA</Text>
+        </Pressable>
         <Pressable style={styles.refreshButton} onPress={onRefresh} accessibilityLabel="Atualizar">
-          <MaterialIcons name="refresh" size={22} color="#FFFFFF" />
+          <MaterialIcons name="refresh" size={20} color="#FFFFFF" />
         </Pressable>
       </View>
 
@@ -218,17 +236,12 @@ function PortfolioHeader({
               {currency(invested)}
             </Text>
 
-            <LinearGradient
-              colors={['rgba(255,255,255,0)', 'rgba(255,255,255,0.15)', 'rgba(255,255,255,0)']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.glassDivider}
-            />
+            <View style={styles.glassDivider} />
 
             <View style={styles.statsRow}>
-              <StatItem icon="bar-chart" label="Posições" value={String(positionCount)} />
+              <StatItem label="Posições" value={String(positionCount)} />
               <View style={styles.statsDivider} />
-              <StatItem icon="show-chart" label="Operações" value={String(operationCount)} />
+              <StatItem label="Operações" value={String(operationCount)} />
             </View>
           </>
         )}
@@ -238,19 +251,15 @@ function PortfolioHeader({
 }
 
 function StatItem({
-  icon,
   label,
   value,
 }: {
-  icon: keyof typeof MaterialIcons.glyphMap;
   label: string;
   value: string;
 }) {
+  const styles = useStyles();
   return (
     <View style={styles.statItem}>
-      <View style={styles.statIcon}>
-        <MaterialIcons name={icon} size={18} color="#FFFFFF" />
-      </View>
       <View>
         <Text style={styles.statLabel}>{label}</Text>
         <Text style={styles.statValue}>{value}</Text>
@@ -260,9 +269,10 @@ function StatItem({
 }
 
 function HeaderSkeleton() {
+  const styles = useStyles();
   return (
     <View>
-      <View style={[styles.skeletonBox, { width: 120, height: 13 }]} />
+      <View style={[styles.skeletonBox, { width: 120, height: 12 }]} />
       <View style={[styles.skeletonBox, { width: 220, height: 40, marginTop: 8 }]} />
       <View style={[styles.skeletonBox, { width: '100%', height: 1, marginTop: 20 }]} />
       <View style={styles.skeletonRow}>
@@ -273,30 +283,42 @@ function HeaderSkeleton() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   screen: { flex: 1, backgroundColor: colors.bg0 },
   scrollContent: { paddingBottom: 0 },
 
   header: {
-    paddingHorizontal: 22,
+    paddingHorizontal: 20,
     paddingBottom: 32,
     borderBottomLeftRadius: 32,
     borderBottomRightRadius: 32,
   },
-  headerTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  headerTop: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  compareButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    height: 36,
+    paddingHorizontal: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.14)',
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.28)',
+  },
+  compareText: { color: '#FFFFFF', fontSize: 12, fontWeight: '500' },
   headerTitle: {
+    flex: 1,
     color: '#FFFFFF',
-    fontSize: 32,
-    fontWeight: '900',
-    letterSpacing: -0.5,
+    fontSize: 28,
+    fontWeight: '600',
   },
   refreshButton: {
-    width: 46,
-    height: 46,
+    width: 48,
+    height: 48,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.14)',
-    borderRadius: 23,
+    borderRadius: 24,
     borderWidth: 1.5,
     borderColor: 'rgba(255, 255, 255, 0.28)',
     boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.12)',
@@ -304,7 +326,7 @@ const styles = StyleSheet.create({
 
   glassCard: {
     marginTop: 24,
-    paddingHorizontal: 22,
+    paddingHorizontal: 20,
     paddingVertical: 20,
     backgroundColor: 'rgba(255, 255, 255, 0.12)',
     borderRadius: 24,
@@ -313,19 +335,18 @@ const styles = StyleSheet.create({
     boxShadow: '0px 8px 24px rgba(0, 0, 0, 0.18)',
   },
   glassLabel: {
-    color: '#B8CBFF',
+    color: colors.textOnBlueDim,
     fontSize: 13,
     fontWeight: '500',
-    letterSpacing: 0.3,
   },
   glassValue: {
-    marginTop: 6,
+    marginTop: 8,
     color: '#FFFFFF',
     fontSize: 40,
-    fontWeight: '900',
+    fontWeight: '600',
     letterSpacing: -1,
   },
-  glassDivider: { height: 1, marginTop: 20 },
+  glassDivider: { height: 1, marginTop: 20, backgroundColor: 'rgba(255, 255, 255, 0.15)' },
 
   statsRow: { flexDirection: 'row', alignItems: 'center', marginTop: 16 },
   statsDivider: {
@@ -335,19 +356,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
   },
   statItem: { flexDirection: 'row', alignItems: 'center' },
-  statIcon: {
-    width: 36,
-    height: 36,
-    marginRight: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.18)',
-  },
-  statLabel: { color: '#B8CBFF', fontSize: 11, fontWeight: '500' },
-  statValue: { marginTop: 2, color: '#FFFFFF', fontSize: 20, fontWeight: '800' },
+  statLabel: { color: colors.textOnBlueDim, fontSize: 11, fontWeight: '500' },
+  statValue: { marginTop: 2, color: '#FFFFFF', fontSize: 20, fontWeight: '600' },
 
   skeletonBox: { backgroundColor: 'rgba(255, 255, 255, 0.10)', borderRadius: 6 },
   skeletonRow: { flexDirection: 'row', marginTop: 16 },
@@ -378,7 +388,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: colors.primary,
   },
-  chipText: { color: colors.textSecondary, fontSize: 12, fontWeight: '600' },
+  chipText: { color: colors.textSecondary, fontSize: 12, fontWeight: '500' },
   chipTextSelected: { color: colors.primary },
 
   listLoading: { paddingVertical: 40, alignItems: 'center' },
@@ -397,4 +407,4 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
   },
   fabPressed: { backgroundColor: colors.primaryDim },
-});
+}));

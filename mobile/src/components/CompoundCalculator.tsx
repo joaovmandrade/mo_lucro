@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { alpha, colors, radius, shadows } from '@/theme';
+import { alpha, makeStyles, radius, shadows } from '@/theme';
 import { currency } from '@/utils/formatters';
+import { useTheme } from '@/contexts/ThemeContext';
 
 /**
  * Calculadora da aula “Juros compostos e o tempo”.
@@ -38,6 +39,7 @@ function project(monthly: number, annualPercent: number, years: number) {
 }
 
 export function CompoundCalculator() {
+  const styles = useStyles();
   const [monthlyText, setMonthlyText] = useState('500');
   const [rateText, setRateText] = useState('10');
   const [yearsText, setYearsText] = useState('10');
@@ -138,6 +140,8 @@ function Field({
   value: string;
   onChangeText: (text: string) => void;
 }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   return (
     <View style={styles.field}>
       <Text style={styles.fieldLabel}>{label}</Text>
@@ -159,9 +163,9 @@ function Field({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   card: {
-    padding: 16,
+    padding: 20,
     backgroundColor: colors.bg1,
     borderRadius: radius.xl,
     borderWidth: 1,
@@ -171,32 +175,32 @@ const styles = StyleSheet.create({
 
   inputsRow: { flexDirection: 'row', gap: 8 },
   field: { flex: 1 },
-  fieldLabel: { color: colors.textSecondary, fontSize: 11, fontWeight: '600' },
+  fieldLabel: { color: colors.textSecondary, fontSize: 11, fontWeight: '500' },
   fieldInputRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    marginTop: 6,
-    paddingHorizontal: 10,
+    marginTop: 8,
+    paddingHorizontal: 12,
     backgroundColor: colors.bg3,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
   },
-  fieldAffix: { color: colors.textMuted, fontSize: 12, fontWeight: '600' },
+  fieldAffix: { color: colors.textMuted, fontSize: 12, fontWeight: '500' },
   fieldInput: {
     flex: 1,
     minWidth: 0,
-    paddingVertical: 10,
+    paddingVertical: 12,
     color: colors.textPrimary,
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: '600',
   },
 
   shortcuts: { flexDirection: 'row', gap: 8, marginTop: 12 },
   shortcut: {
     paddingHorizontal: 12,
-    paddingVertical: 7,
+    paddingVertical: 8,
     backgroundColor: colors.bg1,
     borderRadius: radius.pill,
     borderWidth: 1,
@@ -206,7 +210,7 @@ const styles = StyleSheet.create({
     backgroundColor: alpha(colors.primary, 0.12),
     borderColor: alpha(colors.primary, 0.3),
   },
-  shortcutText: { color: colors.textSecondary, fontSize: 12, fontWeight: '600' },
+  shortcutText: { color: colors.textSecondary, fontSize: 12, fontWeight: '500' },
   shortcutTextSelected: { color: colors.primary },
 
   result: {
@@ -215,36 +219,36 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colors.borderLight,
   },
-  resultLabel: { color: colors.textSecondary, fontSize: 12, fontWeight: '600' },
+  resultLabel: { color: colors.textSecondary, fontSize: 12, fontWeight: '500' },
   resultValue: {
     marginTop: 4,
     color: colors.textPrimary,
     fontSize: 30,
-    fontWeight: '800',
+    fontWeight: '600',
   },
 
   bar: {
     flexDirection: 'row',
-    height: 10,
-    marginTop: 14,
+    height: 8,
+    marginTop: 12,
     backgroundColor: colors.bg4,
     borderRadius: radius.pill,
     overflow: 'hidden',
   },
-  barPart: { height: 10 },
+  barPart: { height: 8 },
   barContributed: { backgroundColor: colors.primary },
   barEarnings: { backgroundColor: colors.profit },
 
-  legendRow: { flexDirection: 'row', gap: 12, marginTop: 14 },
+  legendRow: { flexDirection: 'row', gap: 12, marginTop: 12 },
   legendItem: { flex: 1, flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
-  dot: { width: 10, height: 10, marginTop: 3, borderRadius: radius.pill },
+  dot: { width: 8, height: 8, marginTop: 4, borderRadius: radius.pill },
   legendLabel: { color: colors.textSecondary, fontSize: 11 },
-  legendValue: { marginTop: 2, color: colors.textPrimary, fontSize: 14, fontWeight: '700' },
+  legendValue: { marginTop: 2, color: colors.textPrimary, fontSize: 14, fontWeight: '500' },
 
   note: {
-    marginTop: 14,
+    marginTop: 12,
     color: colors.textMuted,
     fontSize: 11,
     lineHeight: 11 * 1.45,
   },
-});
+}));

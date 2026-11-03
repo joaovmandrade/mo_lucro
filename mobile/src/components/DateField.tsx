@@ -3,8 +3,9 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useState } from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius } from '@/theme';
+import { makeStyles, radius } from '@/theme';
 import { dateFull } from '@/utils/formatters';
+import { useTheme } from '@/contexts/ThemeContext';
 
 /**
  * Campo de data com o mesmo visual do GestureDetector + showDatePicker usado
@@ -21,6 +22,8 @@ export function DateField({
   maximumDate?: Date;
   minimumDate?: Date;
 }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const [open, setOpen] = useState(false);
 
   return (
@@ -58,7 +61,7 @@ export function DateField({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   field: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -72,5 +75,5 @@ const styles = StyleSheet.create({
   },
   text: { flex: 1, color: colors.textPrimary, fontSize: 14 },
   iosActions: { alignItems: 'flex-end', paddingVertical: 8 },
-  iosDone: { color: colors.primary, fontSize: 14, fontWeight: '600' },
-});
+  iosDone: { color: colors.primary, fontSize: 14, fontWeight: '500' },
+}));

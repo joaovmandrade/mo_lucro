@@ -18,7 +18,9 @@ import { FieldLabel, Input, ScreenHeader } from '@/components/form';
 import { Snackbar, useSnackbar } from '@/components/Snackbar';
 import type { TransactionType } from '@/models';
 import { transactionService } from '@/services';
-import { alpha, colors, radius, spacing } from '@/theme';
+import { alpha, makeStyles, radius, spacing } from '@/theme';
+import { useTheme } from '@/contexts/ThemeContext';
+import { goBack } from '@/lib/navigation';
 
 /** Porte de lib/pages/add_transaction_page.dart. */
 
@@ -44,6 +46,8 @@ const INCOME_CATEGORIES: CategoryDef[] = [
 ];
 
 export default function AddTransactionScreen() {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const router = useRouter();
   const { message, show } = useSnackbar();
   const params = useLocalSearchParams<{ type?: string }>();
@@ -92,8 +96,8 @@ export default function AddTransactionScreen() {
         description: description.trim(),
         date,
       });
-      show(isIncome ? 'Receita registrada!' : 'Despesa registrada!');
-      router.back();
+      show(isIncome ? 'Receita registrada' : 'Despesa registrada');
+      goBack(router, '/transactions');
     } catch (err) {
       show(`Erro: ${err instanceof Error ? err.message : String(err)}`, { isError: true });
     } finally {
@@ -171,7 +175,7 @@ export default function AddTransactionScreen() {
                 >
                   <MaterialIcons
                     name={item.icon}
-                    size={14}
+                    size={16}
                     color={selected ? typeColor : colors.textMuted}
                   />
                   <Text style={[styles.categoryText, selected && { color: typeColor }]}>
@@ -187,7 +191,7 @@ export default function AddTransactionScreen() {
             <Input
               value={description}
               onChangeText={setDescription}
-              placeholder="Ex: Almoço, Uber, Netflix..."
+              placeholder="Ex.: Almoço"
               icon="edit"
               maxLength={80}
             />
@@ -236,6 +240,8 @@ function TypeButton({
   selected: boolean;
   onPress: () => void;
 }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   return (
     <Pressable
       onPress={onPress}
@@ -254,25 +260,25 @@ function TypeButton({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   screen: { flex: 1, backgroundColor: colors.bg0 },
   flex: { flex: 1 },
   content: { padding: spacing.lg, paddingBottom: 40 },
 
-  typeRow: { flexDirection: 'row', gap: 10, marginBottom: 24 },
+  typeRow: { flexDirection: 'row', gap: 8, marginBottom: 24 },
   typeButton: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 14,
+    gap: 8,
+    paddingVertical: 16,
     backgroundColor: colors.bg2,
     borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.border,
   },
-  typeLabel: { color: colors.textSecondary, fontSize: 13, fontWeight: '700' },
+  typeLabel: { color: colors.textSecondary, fontSize: 13, fontWeight: '500' },
 
   amountCard: {
     alignItems: 'center',
@@ -280,23 +286,22 @@ const styles = StyleSheet.create({
     borderRadius: radius.xxl,
     borderWidth: 1,
   },
-  amountLabel: { fontSize: 12, fontWeight: '600' },
-  amountInputRow: { flexDirection: 'row', alignItems: 'center', marginTop: 10 },
-  amountPrefix: { fontSize: 20, fontWeight: '700' },
+  amountLabel: { fontSize: 12, fontWeight: '500' },
+  amountInputRow: { flexDirection: 'row', alignItems: 'center', marginTop: 8 },
+  amountPrefix: { fontSize: 20, fontWeight: '600' },
   amountInput: {
     minWidth: 140,
     fontSize: 32,
-    fontWeight: '800',
-    letterSpacing: -1,
+    fontWeight: '600',
     textAlign: 'center',
   },
   amountError: { marginTop: 8, color: colors.loss, fontSize: 12 },
 
-  categories: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10, marginBottom: 16 },
+  categories: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8, marginBottom: 16 },
   categoryChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
+    gap: 4,
     paddingHorizontal: 12,
     paddingVertical: 8,
     backgroundColor: colors.bg2,
@@ -304,7 +309,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  categoryText: { color: colors.textSecondary, fontSize: 12, fontWeight: '600' },
+  categoryText: { color: colors.textSecondary, fontSize: 12, fontWeight: '500' },
 
   field: { marginTop: 8, marginBottom: 16 },
 
@@ -317,4 +322,4 @@ const styles = StyleSheet.create({
   },
   submitButtonDimmed: { opacity: 0.8 },
   submitLabel: { color: '#FFFFFF', fontSize: 15, fontWeight: '600' },
-});
+}));

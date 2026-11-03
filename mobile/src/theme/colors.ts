@@ -3,7 +3,7 @@
  * Os valores ARGB do Flutter viram hex/rgba aqui — mesma cor, mesma ordem.
  */
 
-export const colors = {
+export const lightColors = {
   // ── Backgrounds (light theme) ──────────────────────────────
   bg0: '#ECEEF2',
   bg1: '#FFFFFF',
@@ -47,7 +47,61 @@ export const colors = {
   border: '#E5E7EB',
   borderLight: '#F3F4F6',
   badgeBg: 'rgba(0, 0, 0, 0.06)',
-} as const;
+};
+
+/** Mesmas chaves da paleta clara — as telas trocam de tema sem mudar código. */
+export type Palette = { [K in keyof typeof lightColors]: string };
+
+/**
+ * Paleta escura (RNF-005). As cores de marca e de ganho/perda mudam pouco,
+ * só o suficiente para manter contraste sobre fundo escuro.
+ */
+export const darkColors: Palette = {
+  bg0: '#0B1120',
+  bg1: '#111827',
+  bg2: '#161F2E',
+  bg3: '#1F2937',
+  bg4: '#2A3647',
+
+  surfaceGlass: 'rgba(22, 31, 46, 0.98)',
+  surfaceElevated: '#1B2536',
+  surfacePressed: '#1F2937',
+
+  primary: '#3B82F6',
+  primaryDim: '#2563EB',
+  profit: '#34D399',
+  profitDark: '#10B981',
+  loss: '#F87171',
+  warning: '#FBBF24',
+  accent: '#34D399',
+  purple: '#A78BFA',
+
+  accentBlue: '#3B82F6',
+  accentGreen: '#34D399',
+  accentRed: '#F87171',
+  accentOrange: '#FBBF24',
+  accentPurple: '#A78BFA',
+  accentTeal: '#22D3EE',
+
+  textPrimary: '#F3F4F6',
+  textSecondary: '#A1A9B8',
+  textMuted: '#6B7280',
+
+  textOnBlue: '#FFFFFF',
+  textOnBlueDim: '#DBEAFE',
+  textOnBlueReturn: '#6EE7B7',
+  textOnBlueProfit: '#34D399',
+
+  border: '#263244',
+  borderLight: '#1F2937',
+  badgeBg: 'rgba(255, 255, 255, 0.08)',
+};
+
+/**
+ * Paleta clara exportada com o nome antigo para código fora de componentes
+ * (ex.: HTML do relatório PDF, que é sempre claro). Telas devem usar useTheme().
+ */
+export const colors: Palette = lightColors;
 
 /** Cores de série dos gráficos, na mesma ordem de AppColors.chartColors. */
 export const chartColors = [
@@ -69,14 +123,14 @@ type GradientStops = {
  * Gradientes no formato de <LinearGradient> do expo-linear-gradient.
  * As Alignments do Flutter (-1..1) foram convertidas para coordenadas 0..1.
  */
-export const gradients = {
+export const lightGradients = {
   header: {
-    colors: ['#2563EB', '#1D4ED8', '#4338CA'],
+    colors: ['#2563EB', '#1D4ED8'],
     start: { x: 0.2, y: 0 },
     end: { x: 1, y: 0.8 },
   },
   primary: {
-    colors: ['#2563EB', '#7C3AED'],
+    colors: ['#2563EB', '#1D4ED8'],
     start: { x: 0, y: 0 },
     end: { x: 1, y: 1 },
   },
@@ -87,8 +141,35 @@ export const gradients = {
   },
   /** Usado no BalanceCard — fica sobre o header azul, texto branco. */
   hero: {
-    colors: ['#2563EB', '#1D4ED8', '#4338CA'],
+    colors: ['#2563EB', '#1D4ED8'],
     start: { x: 0, y: 0 },
     end: { x: 1, y: 1 },
   },
 } satisfies Record<string, GradientStops>;
+
+export type Gradients = { [K in keyof typeof lightGradients]: GradientStops };
+
+export const darkGradients: Gradients = {
+  header: {
+    colors: ['#1E40AF', '#1E3A8A'],
+    start: { x: 0.2, y: 0 },
+    end: { x: 1, y: 0.8 },
+  },
+  primary: {
+    colors: ['#1D4ED8', '#1E40AF'],
+    start: { x: 0, y: 0 },
+    end: { x: 1, y: 1 },
+  },
+  card: {
+    colors: ['#161F2E', '#1B2536'],
+    start: { x: 0, y: 0 },
+    end: { x: 1, y: 1 },
+  },
+  hero: {
+    colors: ['#1E40AF', '#1E3A8A'],
+    start: { x: 0, y: 0 },
+    end: { x: 1, y: 1 },
+  },
+};
+
+export const gradients: Gradients = lightGradients;

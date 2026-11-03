@@ -1,11 +1,11 @@
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { PortfolioPosition } from '@/models';
 import { profitLoss, profitLossPercent } from '@/models';
 import { marketDataService } from '@/services';
-import { alpha, colors, radius, shadows } from '@/theme';
+import { alpha, makeStyles, radius, shadows } from '@/theme';
 import {
   categoryColor,
   categoryTagColor,
@@ -14,6 +14,7 @@ import {
   quantityLabel,
 } from '@/utils/categories';
 import { currency, percentSimple } from '@/utils/formatters';
+import { useTheme } from '@/contexts/ThemeContext';
 
 /** Porte de lib/widgets/asset_card.dart. */
 export function AssetCard({
@@ -23,6 +24,8 @@ export function AssetCard({
   position: PortfolioPosition;
   onDelete?: () => void;
 }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const [currentPrice, setCurrentPrice] = useState<number | null>(null);
   const [changePercent, setChangePercent] = useState<number | null>(null);
 
@@ -69,7 +72,7 @@ export function AssetCard({
         <View style={styles.right}>
           {onDelete ? (
             <Pressable onPress={onDelete} style={styles.deleteButton} accessibilityLabel="Excluir">
-              <MaterialIcons name="delete-outline" size={15} color={colors.loss} />
+              <MaterialIcons name="delete-outline" size={16} color={colors.loss} />
             </Pressable>
           ) : null}
 
@@ -93,7 +96,9 @@ export function AssetCard({
 }
 
 function Avatar({ asset, category }: { asset: string; category: string }) {
-  const color = categoryColor(category);
+  const { colors } = useTheme();
+  const styles = useStyles();
+  const color = categoryColor(category, colors);
 
   return (
     <View
@@ -110,7 +115,9 @@ function Avatar({ asset, category }: { asset: string; category: string }) {
 }
 
 function CategoryTag({ category }: { category: string }) {
-  const color = categoryTagColor(category);
+  const { colors } = useTheme();
+  const styles = useStyles();
+  const color = categoryTagColor(category, colors);
 
   return (
     <View
@@ -122,12 +129,14 @@ function CategoryTag({ category }: { category: string }) {
 }
 
 function PnlBadge({ percent, isProfit }: { percent: number; isProfit: boolean }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const color = isProfit ? colors.profitDark : colors.loss;
   const backgroundColor = isProfit ? alpha(colors.profit, 0.1) : alpha(colors.loss, 0.08);
 
   return (
     <View style={[styles.pnlBadge, { backgroundColor }]}>
-      <Ionicons name={isProfit ? 'caret-up' : 'caret-down'} size={11} color={color} />
+      <MaterialIcons name={isProfit ? 'arrow-drop-up' : 'arrow-drop-down'} size={16} color={color} />
       <Text style={[styles.pnlText, { color }]}>{percentSimple(Math.abs(percent))}</Text>
     </View>
   );
@@ -142,6 +151,7 @@ function Metric({
   value: string;
   align?: 'flex-start' | 'flex-end';
 }) {
+  const styles = useStyles();
   return (
     <View style={[styles.metric, { alignItems: align }]}>
       <Text style={styles.metricLabel}>{label}</Text>
@@ -150,7 +160,7 @@ function Metric({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   card: {
     marginBottom: 12,
     backgroundColor: colors.bg1,
@@ -167,14 +177,14 @@ const styles = StyleSheet.create({
   },
   info: { flex: 1, marginLeft: 12 },
   assetRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  asset: { color: colors.textPrimary, fontSize: 17, fontWeight: '800' },
-  company: { color: colors.textSecondary, fontSize: 13, marginTop: 3 },
+  asset: { color: colors.textPrimary, fontSize: 17, fontWeight: '600' },
+  company: { color: colors.textSecondary, fontSize: 13, marginTop: 4 },
   quantity: { color: colors.textMuted, fontSize: 11, marginTop: 2 },
   right: { alignItems: 'flex-end' },
   deleteButton: {
     width: 28,
     height: 28,
-    marginBottom: 6,
+    marginBottom: 8,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: alpha(colors.loss, 0.08),
@@ -182,7 +192,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: alpha(colors.loss, 0.2),
   },
-  value: { color: colors.textPrimary, fontSize: 17, fontWeight: '800' },
+  value: { color: colors.textPrimary, fontSize: 17, fontWeight: '600' },
   avatar: {
     width: 44,
     height: 44,
@@ -191,28 +201,28 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     borderWidth: 1,
   },
-  avatarText: { fontSize: 13, fontWeight: '800' },
+  avatarText: { fontSize: 13, fontWeight: '500' },
   tag: {
-    paddingHorizontal: 7,
+    paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: radius.pill,
     borderWidth: 1,
   },
-  tagText: { fontSize: 9, fontWeight: '600' },
+  tagText: { fontSize: 9, fontWeight: '500' },
   pnlBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 4,
     paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingVertical: 4,
     borderRadius: radius.sm,
   },
-  pnlText: { fontSize: 11, fontWeight: '700', marginLeft: 2 },
+  pnlText: { fontSize: 11, fontWeight: '500', marginLeft: 2 },
   metrics: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 12,
     backgroundColor: colors.bg3,
     borderBottomLeftRadius: radius.lg,
     borderBottomRightRadius: radius.lg,
@@ -225,5 +235,5 @@ const styles = StyleSheet.create({
     backgroundColor: colors.border,
   },
   metricLabel: { color: colors.textMuted, fontSize: 10, fontWeight: '500' },
-  metricValue: { color: colors.textPrimary, fontSize: 11, fontWeight: '700', marginTop: 2 },
-});
+  metricValue: { color: colors.textPrimary, fontSize: 11, fontWeight: '500', marginTop: 2 },
+}));

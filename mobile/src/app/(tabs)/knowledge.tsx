@@ -15,11 +15,14 @@ import {
   type Lesson,
 } from '@/data/knowledge';
 import { useKnowledgeProgress } from '@/lib/knowledgeProgress';
-import { alpha, colors, gradients, radius, shadows } from '@/theme';
+import { alpha, makeStyles, radius, shadows } from '@/theme';
+import { useTheme } from '@/contexts/ThemeContext';
 
 const FILTERS = [{ key: 'all', label: 'Todas' }, ...TRACKS.map((t) => ({ key: t.id, label: t.title }))];
 
 export default function KnowledgeScreen() {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const router = useRouter();
   const { completed } = useKnowledgeProgress();
 
@@ -189,6 +192,8 @@ function Header({
   progress: number;
   remainingMinutes: number;
 }) {
+  const styles = useStyles();
+  const { colors, gradients } = useTheme();
   const insets = useSafeAreaInsets();
 
   return (
@@ -196,10 +201,10 @@ function Header({
       colors={gradients.header.colors}
       start={gradients.header.start}
       end={gradients.header.end}
-      style={[styles.header, { paddingTop: insets.top + 14 }]}
+      style={[styles.header, { paddingTop: insets.top + 16 }]}
     >
       <Text style={styles.headerTitle}>Base de Conhecimento</Text>
-      <Text style={styles.headerSubtitle}>Estude tudo sobre aportes, no seu ritmo.</Text>
+      <Text style={styles.headerSubtitle}>Aulas curtas sobre investimentos, no seu ritmo</Text>
 
       <View style={styles.progressCard}>
         <View style={styles.progressTopRow}>
@@ -213,7 +218,7 @@ function Header({
           accessibilityValue={{ min: 0, max: total, now: done }}
         >
           <LinearGradient
-            colors={[colors.warning, '#FBBF24']}
+            colors={[colors.warning, colors.warning]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={[styles.progressFill, { width: `${Math.min(Math.max(progress, 0), 1) * 100}%` }]}
@@ -251,10 +256,12 @@ function NextUpCard({
   started: boolean;
   onOpen: () => void;
 }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   if (!lesson) {
     return (
       <View style={styles.doneCard}>
-        <MaterialIcons name="check-circle" size={22} color={colors.profit} />
+        <MaterialIcons name="check-circle" size={20} color={colors.profit} />
         <Text style={styles.doneText}>
           Você concluiu todas as aulas. Volte a qualquer tema quando quiser rever.
         </Text>
@@ -272,7 +279,7 @@ function NextUpCard({
       accessibilityLabel={`${started ? 'Continuar' : 'Começar'}: ${lesson.title}`}
     >
       <View style={styles.nextIcon}>
-        <MaterialIcons name="play-arrow" size={26} color="#FFFFFF" />
+        <MaterialIcons name="play-arrow" size={24} color="#FFFFFF" />
       </View>
       <View style={styles.nextText}>
         <Text style={styles.nextLabel}>{started ? 'Continuar' : 'Comece por aqui'}</Text>
@@ -281,7 +288,7 @@ function NextUpCard({
           {track?.title}, {lesson.minutes} min de leitura
         </Text>
       </View>
-      <MaterialIcons name="chevron-right" size={22} color={colors.textMuted} />
+      <MaterialIcons name="chevron-right" size={20} color={colors.textMuted} />
     </Pressable>
   );
 }
@@ -300,6 +307,8 @@ function SearchResults({
   completed: Set<string>;
   onOpen: (id: string) => void;
 }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   if (results.length === 0) {
     return (
       <View style={styles.emptyState}>
@@ -354,6 +363,8 @@ function LessonRow({
   isLast: boolean;
   onPress: () => void;
 }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   return (
     <Pressable
       onPress={onPress}
@@ -387,7 +398,7 @@ function LessonRow({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   screen: { flex: 1, backgroundColor: colors.bg0 },
   pressed: { backgroundColor: colors.surfacePressed },
 
@@ -398,7 +409,7 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,
   },
-  headerTitle: { color: colors.textOnBlue, fontSize: 22, fontWeight: '800' },
+  headerTitle: { color: colors.textOnBlue, fontSize: 22, fontWeight: '600' },
   headerSubtitle: { marginTop: 4, marginBottom: 20, color: colors.textOnBlueDim, fontSize: 13 },
 
   progressCard: {
@@ -410,7 +421,7 @@ const styles = StyleSheet.create({
   },
   progressTopRow: { flexDirection: 'row', justifyContent: 'space-between' },
   progressLabel: { color: colors.textOnBlueDim, fontSize: 13 },
-  progressPercent: { color: colors.textOnBlue, fontSize: 15, fontWeight: '700' },
+  progressPercent: { color: colors.textOnBlue, fontSize: 15, fontWeight: '600' },
   progressTrack: {
     height: 8,
     marginTop: 12,
@@ -421,7 +432,7 @@ const styles = StyleSheet.create({
   progressFill: { height: 8, borderRadius: radius.pill },
   progressBottomRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12 },
   progressSmallLabel: { color: colors.textOnBlueDim, fontSize: 11 },
-  progressStrong: { marginTop: 2, color: colors.textOnBlue, fontSize: 15, fontWeight: '700' },
+  progressStrong: { marginTop: 2, color: colors.textOnBlue, fontSize: 15, fontWeight: '600' },
   progressDim: { marginTop: 2, color: colors.textOnBlueDim, fontSize: 15, fontWeight: '600' },
   alignEnd: { alignItems: 'flex-end' },
 
@@ -431,19 +442,19 @@ const styles = StyleSheet.create({
   searchBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: 14,
+    gap: 8,
+    paddingHorizontal: 16,
     backgroundColor: colors.bg1,
     borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.border,
   },
-  searchInput: { flex: 1, paddingVertical: 13, color: colors.textPrimary, fontSize: 14 },
+  searchInput: { flex: 1, paddingVertical: 12, color: colors.textPrimary, fontSize: 14 },
 
-  filters: { flexGrow: 0, marginTop: 14, marginHorizontal: -20 },
+  filters: { flexGrow: 0, marginTop: 12, marginHorizontal: -20 },
   filtersContent: { paddingHorizontal: 20, gap: 8, alignItems: 'center' },
   chip: {
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     paddingVertical: 8,
     backgroundColor: colors.bg2,
     borderRadius: radius.pill,
@@ -454,16 +465,16 @@ const styles = StyleSheet.create({
     backgroundColor: alpha(colors.primary, 0.15),
     borderColor: alpha(colors.primary, 0.35),
   },
-  chipText: { color: colors.textSecondary, fontSize: 12, fontWeight: '600' },
+  chipText: { color: colors.textSecondary, fontSize: 12, fontWeight: '500' },
   chipTextSelected: { color: colors.primary },
 
   // Próxima aula
   nextCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
+    gap: 12,
     marginTop: 20,
-    padding: 16,
+    padding: 20,
     backgroundColor: colors.bg1,
     borderRadius: radius.xl,
     borderWidth: 1,
@@ -479,16 +490,16 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
   },
   nextText: { flex: 1 },
-  nextLabel: { color: colors.primary, fontSize: 12, fontWeight: '700' },
-  nextTitle: { marginTop: 2, color: colors.textPrimary, fontSize: 16, fontWeight: '700' },
-  nextMeta: { marginTop: 3, color: colors.textSecondary, fontSize: 12 },
+  nextLabel: { color: colors.primary, fontSize: 12, fontWeight: '500' },
+  nextTitle: { marginTop: 2, color: colors.textPrimary, fontSize: 16, fontWeight: '600' },
+  nextMeta: { marginTop: 4, color: colors.textSecondary, fontSize: 12 },
 
   doneCard: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     marginTop: 20,
-    padding: 16,
+    padding: 20,
     backgroundColor: alpha(colors.profit, 0.08),
     borderRadius: radius.lg,
     borderWidth: 1,
@@ -500,22 +511,22 @@ const styles = StyleSheet.create({
   section: { marginTop: 24 },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
   sectionIcon: {
-    width: 38,
-    height: 38,
+    width: 40,
+    height: 40,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: alpha(colors.primary, 0.1),
     borderRadius: radius.md,
   },
   sectionText: { flex: 1 },
-  sectionTitle: { color: colors.textPrimary, fontSize: 16, fontWeight: '700' },
+  sectionTitle: { color: colors.textPrimary, fontSize: 16, fontWeight: '600' },
   sectionDescription: {
     marginTop: 2,
     color: colors.textSecondary,
     fontSize: 12,
     lineHeight: 12 * 1.4,
   },
-  sectionCount: { color: colors.textMuted, fontSize: 12, fontWeight: '700' },
+  sectionCount: { color: colors.textMuted, fontSize: 12, fontWeight: '500' },
 
   rowsCard: {
     backgroundColor: colors.bg1,
@@ -525,7 +536,7 @@ const styles = StyleSheet.create({
     boxShadow: shadows.card,
     overflow: 'hidden',
   },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16 },
   rowDivider: { borderBottomWidth: 1, borderBottomColor: colors.borderLight },
   badge: {
     width: 32,
@@ -536,14 +547,14 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
   },
   badgeDone: { backgroundColor: colors.profit },
-  badgeText: { color: colors.textSecondary, fontSize: 13, fontWeight: '700' },
+  badgeText: { color: colors.textSecondary, fontSize: 13, fontWeight: '500' },
   rowText: { flex: 1 },
-  rowTitle: { color: colors.textPrimary, fontSize: 15, fontWeight: '700' },
-  rowSummary: { marginTop: 3, color: colors.textSecondary, fontSize: 12, lineHeight: 12 * 1.4 },
-  rowMeta: { marginTop: 5, color: colors.textMuted, fontSize: 11 },
+  rowTitle: { color: colors.textPrimary, fontSize: 15, fontWeight: '600' },
+  rowSummary: { marginTop: 4, color: colors.textSecondary, fontSize: 12, lineHeight: 12 * 1.4 },
+  rowMeta: { marginTop: 4, color: colors.textMuted, fontSize: 11 },
 
   // Busca sem resultado
-  resultsCount: { marginBottom: 12, color: colors.textSecondary, fontSize: 12, fontWeight: '600' },
+  resultsCount: { marginBottom: 12, color: colors.textSecondary, fontSize: 12, fontWeight: '500' },
   emptyState: { paddingVertical: 40, alignItems: 'center' },
   emptyIcon: {
     padding: 20,
@@ -553,14 +564,14 @@ const styles = StyleSheet.create({
     borderColor: alpha(colors.primary, 0.18),
   },
   emptyTitle: {
-    marginTop: 18,
+    marginTop: 16,
     color: colors.textPrimary,
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '600',
     textAlign: 'center',
   },
   emptyBody: {
-    marginTop: 6,
+    marginTop: 8,
     paddingHorizontal: 12,
     color: colors.textSecondary,
     fontSize: 13,
@@ -575,4 +586,4 @@ const styles = StyleSheet.create({
     lineHeight: 11 * 1.5,
     textAlign: 'center',
   },
-});
+}));
