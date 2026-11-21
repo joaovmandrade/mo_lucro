@@ -47,7 +47,7 @@ Aplicação fintech em **React Native** para gerenciamento de carteira de invest
 ### 1. Clonar o repositório
 
 ```bash
-git clone https://github.com/usuario/mo_lucro.git
+git clone https://github.com/joaovmandrade/mo_lucro.git
 cd mo_lucro
 ```
 
